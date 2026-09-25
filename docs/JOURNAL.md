@@ -62,6 +62,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
+### EF6/EF7/EF8 — dépôt, remplacement et assignation du relecteur
+
+**Fait :** `POST /api/exercices` (dépôt + tirage du relecteur parmi les présents hors auteur, `422` si personne) et `PUT /api/exercices/{id}` (remplacement par l'auteur tant que la relecture n'est pas rendue, même session clôturée). EF8 embarqué dans le ticket : le contrat et D4 assignent le relecteur au dépôt, un dépôt conforme est impossible sans. Migration V5 (exercice + relecture), paquetages `exercice/` et `relecture/`. 3 tranchages en section 7 (« démarrée » = rendue, `403 NON_AUTEUR`, auteur absent autorisé + définition du lien valide). D2 mis à jour (`verrouillee` retiré, redondant avec `rendueAt`). 18 tests nouveaux, 59/59 verts.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe

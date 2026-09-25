@@ -223,8 +223,8 @@ paths:
                 properties:
                   id: { type: integer, format: int64 }
                   statut: { type: string, enum: [EN_ATTENTE_RELECTURE, RELU] }
-        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE
-        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE
+        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE (URL http(s) absolue, 2048 car. max) | CHAMPS_REQUIS
+        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE | ETUDIANT_INCONNU (inexistant ou hors promotion, section 7)
         "409": { $ref: "#/components/responses/Erreur" }   # EXERCICE_DEJA_DEPOSE (utilisez PUT) | SESSION_CLOTUREE (RG11)
         "422": { $ref: "#/components/responses/Erreur" }   # AUCUN_RELECTEUR_DISPONIBLE
 
@@ -257,9 +257,10 @@ paths:
                 properties:
                   id: { type: integer, format: int64 }
                   statut: { type: string, enum: [EN_ATTENTE_RELECTURE, RELU] }
-        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE
+        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE | CHAMPS_REQUIS
+        "403": { $ref: "#/components/responses/Erreur" }   # NON_AUTEUR — etudiantId n'est pas l'auteur (ajout EF7, section 7)
         "404": { $ref: "#/components/responses/Erreur" }   # EXERCICE_INCONNU
-        "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_COMMENCEE
+        "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_COMMENCEE — relecture déjà rendue (section 7) ; indépendant de la clôture (RG12)
     get:
       summary: Consulter le détail d'un exercice, note et commentaire inclus (EF12, RG7)
       description: |

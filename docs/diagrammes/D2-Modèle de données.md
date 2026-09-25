@@ -45,18 +45,24 @@ erDiagram
         bigint etudiantId FK
         string lien
         string statut "EN_ATTENTE_RELECTURE | RELU"
+        datetime deposeAt
     }
 
     RELECTURE {
         bigint id PK "BIGSERIAL"
-        bigint exerciceId FK
+        bigint exerciceId FK "unique (RG5)"
         bigint relecteurId FK
-        int note "0 à 20, entier"
-        string commentaire
-        datetime rendueAt
-        boolean verrouillee
+        int note "0 à 20, entier, nul tant que non rendue"
+        string commentaire "nul tant que non rendue"
+        datetime rendueAt "nul tant que non rendue"
     }
 ```
+
+> Mis à jour pendant EF6/EF8 : la relecture est créée **au dépôt** (assignation, EF8),
+> d'où note, commentaire et `rendueAt` nuls jusqu'au rendu. Le booléen `verrouillee`
+> initialement prévu est retiré : avec RG9, une relecture est verrouillée dès qu'elle
+> est rendue, donc `rendueAt non nul` porte déjà l'information — un second champ
+> pourrait diverger.
 
 ## Identifiants : `bigint` auto-incrément, pas d'UUID
 
