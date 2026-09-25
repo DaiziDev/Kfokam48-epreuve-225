@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Logique métier EF1 : ouverture de session avec code de présence éphémère.
  * RG1 : expiration = ouverture + 15 minutes, calculée depuis le Clock injecté.
  * EF13/EF15 : clôture et réouverture manuelles (RG15).
+ * EF14 : clôture automatique 24h après expirationAt (RG14).
  */
 @Service
 public class SessionService {
@@ -23,6 +24,7 @@ public class SessionService {
     private static final String ALPHABET_CODE = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     private static final int LONGUEUR_CODE = 6;
     private static final Duration DUREE_CODE = Duration.ofMinutes(15); // RG1
+    private static final Duration DELAI_AUTO_CLOTURE = Duration.ofHours(24); // RG14
     private static final int MAX_TENTATIVES = 10;
 
     private final SessionRepository sessions;
@@ -82,6 +84,19 @@ public class SessionService {
         }
         session.setStatut(SessionStatut.OUVERTE);
         return new SessionStatutChange(session.getId(), session.getStatut());
+    }
+
+    /**
+     * EF14/RG14 : clôture automatique 24h après expirationAt. Le délai part de
+     * l'expiration d'origine (RG15) : une session rouverte au-delà de la limite
+     * est refermée au passage suivant — décision section 7.
+     *
+     * @return le nombre de sessions clôturées par ce passage
+     */
+    @Transactional
+    public int cloturerSessionsEchues() {
+        Instant limite = horloge.instant().minus(DELAI_AUTO_CLOTURE);
+        return sessions.cloturerExpireesAvant(limite, SessionStatut.OUVERTE, SessionStatut.CLOTUREE);
     }
 
     private SessionEntity trouver(Long sessionId) {

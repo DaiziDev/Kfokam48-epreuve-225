@@ -54,6 +54,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
+### EF14 — auto-clôture 24h après expirationAt
+
+**Fait :** tâche planifiée (`@Scheduled`, chaque minute) qui clôture en une requête les sessions `OUVERTE` dont `expirationAt + 24h` est atteint. Règle dans `SessionService` (testée à horloge déplaçable : 1 s avant la limite → reste ouverte, à la limite → clôturée, réouverture ne repousse pas le délai), tâche coupée en profil test pour éviter un thread de fond concurrent. Index V4 (statut, expiration_at). Horloge mutable extraite en classe de test partagée. 7 tests nouveaux, 41/41 verts.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe

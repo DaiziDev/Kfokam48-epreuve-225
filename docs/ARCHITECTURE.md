@@ -52,8 +52,17 @@ Les domaines suivants suivront la même logique : `presence/`, `exercice/`, `rel
 
 - Identifiants **`BIGINT IDENTITY`** générés par la base (alignés sur le contrat int64,
   jamais d'UUID applicatif — cf. D2).
-- **Flyway versionné** : V1 promotion + session_cours, V2 promotion de démonstration.
-  Une migration par ticket, l'historique raconte les stories.
+- **Flyway versionné** : V1 promotion + session_cours, V2 promotion de démonstration,
+  V3 etudiant + presence, V4 index de l'auto-clôture. Une migration par ticket,
+  l'historique raconte les stories.
+
+### Tâches planifiées
+
+- **Auto-clôture (RG14)** : `session/AutoClotureTache` appelle chaque minute
+  `SessionService.cloturerSessionsEchues()`. La règle reste dans le service (testable
+  par horloge déplaçable) ; la tâche ne fait que la déclencher.
+- Coupée en profil test (`kfokam48.auto-cloture.active=false`) : pas de thread de fond
+  qui modifie les données pendant qu'un test les vérifie.
 
 ## Frontend
 
