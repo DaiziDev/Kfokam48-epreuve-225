@@ -24,11 +24,19 @@ Chaque entrée répond aux trois mêmes questions :
 
 ## Étape 2 — Première version
 
-**Fait :** EF1 (Must) livrée : `POST /api/sessions` renvoie 201 avec id, code (6 caractères sans O/0/I/1), ouvertureAt et expirationAt = ouverture + 15 min (RG1) ; 400 `CHAMPS_REQUIS` au format imposé si champ manquant ; 404 `PROMOTION_INCONNUE` si le promotionId n'existe pas (tranché en section 7). Migration Flyway `V1__sessions_et_promotions.sql` (promotion + session_cours, BIGINT IDENTITY, code unique indexé). 5 tests d'intégration MockMvc sur H2 + Flyway réel, horloge figée à 10:00Z pour vérifier l'arithmétique RG1 exacte. 6/6 tests verts.
+**Fait :** EF2/EF3 (Must) livrée : `POST /api/presences` — présence enregistrée avec `source = ETUDIANT` (201), `410 CODE_EXPIRE` après la fenêtre de 15 min, `409 DEJA_PRESENT` (unicité base + service), `400 CODE_INCONNU`. Migration `V3__etudiants_et_presences.sql` (tables etudiant + presence, contrainte d'unicité session+étudiant). 3 tranchages nouveaux en section 7 : `404 ETUDIANT_INCONNU`, `409 SESSION_CLOTUREE` avec priorité du 410, normalisation du code (trim + casse). 8 tests d'intégration nouveaux, dont 2 avec horloge déplaçable pour le 410. 15/15 tests verts.
 
-**Bloqué :** ~30 min sur Spring Boot 4 : Jackson 3 remplace 2 (`tools.jackson.*`), `@AutoConfigureMockMvc` a déménagé vers `org.springframework.boot.webmvc.test.autoconfigure`, et `spring.jackson.serialization.write-dates-as-timestamps` n'existe plus (le binding `JacksonProperties` casse le contexte au démarrage). Puis un conflit de nom de bean `horloge` entre la config de prod et la config de test — résolu en renommant le bean de test avec `@Primary`.
+**Bloqué :** 20 min sur un bug de test subtil : remplacer le champ d'une `@TestConfiguration` ne change pas le `Clock` déjà injecté dans les services — résolu avec une horloge mutable déléguante (le bean lui-même change d'instant). Puis 10 min de `target/` verrouillé par l'instance de démo restée ouverte (leçon : tuer le process Java avant `mvn clean`).
 
 **IA :** a proposé le découpage en 8 étapes, le format du code (alphabet sans ambiguïté visuelle), le bean `Clock` injectable et le test par horloge figée. Vérifié en relançant la suite Maven après chaque étape et en lisant les causes profondes dans les rapports surefire plutôt qu'en faisant confiance à ses explications.
+
+### EF2/EF3 — présence par code
+
+**Fait :** `POST /api/presences` — présence enregistrée avec `source = ETUDIANT` (201), `410 CODE_EXPIRE` après la fenêtre de 15 min, `409 DEJA_PRESENT` (unicité base + service), `400 CODE_INCONNU`. Migration `V3__etudiants_et_presences.sql` (tables etudiant + presence, contrainte d'unicité session+étudiant). 3 tranchages nouveaux en section 7 : `404 ETUDIANT_INCONNU`, `409 SESSION_CLOTUREE` avec priorité du 410, normalisation du code (trim + casse). 8 tests d'intégration nouveaux, dont 2 avec horloge déplaçable pour le 410. 15/15 tests verts.
+
+**Bloqué :** 20 min sur un bug de test subtil : remplacer le champ d'une `@TestConfiguration` ne change pas le `Clock` déjà injecté dans les services — résolu avec une horloge mutable déléguante (le bean lui-même change d'instant). Puis 10 min de `target/` verrouillé par l'instance de démo restée ouverte (leçon : tuer le process Java avant `mvn clean`).
+
+**IA :** a proposé l'ordre des vérifications (étudiant → code → clôturée → déjà présent), la priorité 410 > 409 et la normalisation du code. Vérifié en écrivant d'abord les tests qui encodent mes critères d'acceptation, en constatant moi-même les 2 échecs d'horloge, et en validant le fix par la relecture du mécanisme d'injection Spring (bean singleton).
 
 ---
 

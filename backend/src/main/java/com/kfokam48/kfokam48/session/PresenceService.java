@@ -1,0 +1,85 @@
+package com.kfokam48.kfokam48.session;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Locale;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Logique métier EF2/EF3 : l'étudiant marque sa présence avec le code éphémère.
+ * L'ordre des vérifications suit le diagramme de séquence D3, avec une règle de
+ * priorité tranchée en section 7 : un code expiré prime sur une session clôturée
+ * (c'est la cause racine vue par l'étudiant).
+ *
+ * RG3 (5 échecs → blocage 2 min) se branchera ici : point d'entrée unique.
+ */
+@Service
+public class PresenceService {
+
+    private final SessionRepository sessions;
+    private final EtudiantRepository etudiants;
+    private final PresenceRepository presences;
+    private final Clock horloge;
+
+    public PresenceService(SessionRepository sessions, EtudiantRepository etudiants,
+            PresenceRepository presences, Clock horloge) {
+        this.sessions = sessions;
+        this.etudiants = etudiants;
+        this.presences = presences;
+        this.horloge = horloge;
+    }
+
+    @Transactional
+    public PresenceCreee enregistrer(String codeBrut, Long etudiantId) {
+        // 0. L'étudiant doit exister (404, décision section 7)
+        EtudiantEntity etudiant = etudiants.findById(etudiantId)
+                .orElseThrow(() -> new EtudiantInconnuException(etudiantId));
+
+        // 1. Le code mène à une session (400) — normalisation : saisie manuelle
+        String code = normaliser(codeBrut);
+        SessionEntity session = sessions.findByCode(code)
+                .orElseThrow(() -> new CodeInconnuException(code));
+
+        // 2. Le code n'est pas expiré (410, RG1) — prime sur la clôture
+        if (horloge.instant().isAfter(session.getExpirationAt())) {
+            throw new CodeExpireException();
+        }
+
+        // 3. La session est encore ouverte (409, RG2 au sens état) — tranché section 7
+        if (session.getStatut() == SessionStatut.CLOTUREE) {
+            throw new SessionClotureeException();
+        }
+
+        // 4. Pas de double présence (409, EF3)
+        if (presences.existsBySessionIdAndEtudiantId(session.getId(), etudiantId)) {
+            throw new DejaPresentException();
+        }
+
+        // 5. Cas nominal : présence créée avec source = ETUDIANT (EF2)
+        PresenceEntity presence = new PresenceEntity();
+        presence.setSession(session);
+        presence.setEtudiant(etudiant);
+        presence.setSource(PresenceSource.ETUDIANT);
+        presence.setMarqueeAt(horloge.instant());
+        presences.save(presence);
+
+        return new PresenceCreee(presence.getId(), session.getId(), etudiantId, presence.getSource());
+    }
+
+    /**
+     * Le code est tapé à la main sur mobile (ENF1) : espaces et casse ne doivent
+     * pas faire échouer un étudiant légitime.
+     */
+    private static String normaliser(String codeBrut) {
+        String code = (codeBrut == null) ? "" : codeBrut.trim().toUpperCase(Locale.ROOT);
+        if (code.isEmpty()) {
+            throw new CodeInconnuException("");
+        }
+        return code;
+    }
+
+    public record PresenceCreee(Long id, Long sessionId, Long etudiantId, PresenceSource source) {
+    }
+}

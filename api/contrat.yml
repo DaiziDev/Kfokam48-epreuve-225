@@ -120,8 +120,9 @@ paths:
                   etudiantId: { type: integer, format: int64 }
                   source: { type: string, enum: [ETUDIANT, FORMATEUR] }
         "400": { $ref: "#/components/responses/Erreur" }   # CODE_INCONNU
-        "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT
-        "410": { $ref: "#/components/responses/Erreur" }   # CODE_EXPIRE
+        "404": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU (ajout EF2, décision section 7)
+        "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT | SESSION_CLOTUREE (ajout EF2, décision section 7)
+        "410": { $ref: "#/components/responses/Erreur" }   # CODE_EXPIRE — prime sur SESSION_CLOTUREE quand les deux s'appliquent
         "429": { $ref: "#/components/responses/Erreur" }   # TROP_ECHECS (EF4/RG3 : blocage 2 min après 5 échecs)
 
   /api/sessions/{id}/presences:

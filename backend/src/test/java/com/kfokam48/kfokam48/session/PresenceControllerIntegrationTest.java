@@ -1,0 +1,245 @@
+package com.kfokam48.kfokam48.session;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * EF2/EF3 : trajet HTTP complet sur H2 + Flyway, avec une horloge de test
+ * déplaçable : T0 (création de session) puis T+20min (code expiré, 410).
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Transactional
+@Import(PresenceControllerIntegrationTest.HorlogeDeTest.class)
+class PresenceControllerIntegrationTest {
+
+    private static final Instant T0 = Instant.parse("2026-09-25T10:00:00Z");
+
+    /**
+     * Horloge mutable : le bean est créé UNE fois et injecté dans les services,
+     * c'est donc l'instance elle-même qui doit pouvoir bouger (remplacer le champ
+     * ne suffirait pas — les services garderaient l'ancien objet).
+     */
+    static class HorlogeMutable extends Clock {
+        private volatile Instant instant;
+
+        HorlogeMutable(Instant initial) {
+            this.instant = initial;
+        }
+
+        void avancerA(Instant nouvelInstant) {
+            this.instant = nouvelInstant;
+        }
+
+        @Override
+        public java.time.ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(java.time.ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
+        }
+    }
+
+    @TestConfiguration
+    static class HorlogeDeTest {
+        final HorlogeMutable horloge = new HorlogeMutable(T0);
+
+        @Bean
+        @Primary
+        Clock horlogeDeTest() {
+            return horloge;
+        }
+    }
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private HorlogeDeTest horlogeDeTest;
+
+    @Autowired
+    private PromotionRepository promotions;
+
+    @Autowired
+    private EtudiantRepository etudiants;
+
+    private Long etudiant1;
+    private Long etudiant2;
+
+    @BeforeEach
+    void preparer() {
+        horlogeDeTest.horloge.avancerA(T0);
+
+        PromotionEntity promotion = promotions.save(promotion("KFOKAM48"));
+
+        etudiant1 = etudiants.save(etudiant(promotion, "Alice")).getId();
+        etudiant2 = etudiants.save(etudiant(promotion, "Boris")).getId();
+    }
+
+    private PromotionEntity promotion(String nom) {
+        PromotionEntity p = new PromotionEntity();
+        p.setNom(nom);
+        return p;
+    }
+
+    private EtudiantEntity etudiant(PromotionEntity promotion, String nom) {
+        EtudiantEntity e = new EtudiantEntity();
+        e.setPromotion(promotion);
+        e.setNom(nom);
+        return e;
+    }
+
+    /** Crée une session via l'API à l'heure courante de l'horloge de test. */
+    private String creerSessionEtRetournerCode() throws Exception {
+        MvcResult resultat = mockMvc.perform(post("/api/sessions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titre\":\"Algorithmique\",\"promotionId\":1}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String corps = resultat.getResponse().getContentAsString();
+        int debut = corps.indexOf("\"code\":\"") + "\"code\":\"".length();
+        return corps.substring(debut, corps.indexOf("\"", debut));
+    }
+
+    @Test
+    void codeValideEnregistreLaPresenceAvecSourceEtudiant() throws Exception {
+        String code = creerSessionEtRetournerCode();
+
+        mockMvc.perform(post("/api/presences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + code + "\",\"etudiantId\":" + etudiant1 + "}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.sessionId").isNumber())
+                .andExpect(jsonPath("$.etudiantId").value(etudiant1))
+                .andExpect(jsonPath("$.source").value("ETUDIANT"));
+    }
+
+    @Test
+    void codeAvecEspacesEtCasseDifferentesEstAccepte() throws Exception {
+        String code = creerSessionEtRetournerCode();
+        String codeSaisi = "  " + code.toLowerCase() + " ";
+
+        mockMvc.perform(post("/api/presences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + codeSaisi + "\",\"etudiantId\":" + etudiant1 + "}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.source").value("ETUDIANT"));
+    }
+
+    @Test
+    void codeInconnuRenvoie400CodeInconnu() throws Exception {
+        mockMvc.perform(post("/api/presences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"ZZZZZZ\",\"etudiantId\":" + etudiant1 + "}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CODE_INCONNU"))
+                .andExpect(jsonPath("$.message").isString());
+    }
+
+    @Test
+    void codeExpireRenvoie410CodeExpire() throws Exception {
+        String code = creerSessionEtRetournerCode();
+
+        // On déplace l'horloge 20 min après l'ouverture : la fenêtre de 15 min (RG1) est passée
+        horlogeDeTest.horloge.avancerA(T0.plusSeconds(20 * 60));
+
+        mockMvc.perform(post("/api/presences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + code + "\",\"etudiantId\":" + etudiant1 + "}"))
+                .andExpect(status().isGone())
+                .andExpect(jsonPath("$.code").value("CODE_EXPIRE"))
+                .andExpect(jsonPath("$.message").isString());
+    }
+
+    @Test
+    void deuxiemeTentativeRenvoie409DejaPresent() throws Exception {
+        String code = creerSessionEtRetournerCode();
+        String corps = "{\"code\":\"" + code + "\",\"etudiantId\":" + etudiant1 + "}";
+
+        mockMvc.perform(post("/api/presences").contentType(MediaType.APPLICATION_JSON).content(corps))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/presences").contentType(MediaType.APPLICATION_JSON).content(corps))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("DEJA_PRESENT"));
+    }
+
+    @Test
+    void etudiantInconnuRenvoie404() throws Exception {
+        String code = creerSessionEtRetournerCode();
+
+        mockMvc.perform(post("/api/presences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + code + "\",\"etudiantId\":999999}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ETUDIANT_INCONNU"));
+    }
+
+    @Test
+    void sessionClotureeAvecCodeValideRenvoie409SessionCloturee() throws Exception {
+        String code = creerSessionEtRetournerCode();
+
+        // Le formateur clôture la session pendant que le code est encore valide
+        // (la clôture manuelle EF13 viendra avec son ticket ; on simule l'état)
+        SessionEntity session = sessionParCode(code);
+        session.setStatut(SessionStatut.CLOTUREE);
+
+        mockMvc.perform(post("/api/presences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + code + "\",\"etudiantId\":" + etudiant2 + "}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SESSION_CLOTUREE"));
+    }
+
+    @Test
+    void codeExpirePrimeSurSessionCloturee() throws Exception {
+        String code = creerSessionEtRetournerCode();
+        SessionEntity session = sessionParCode(code);
+        session.setStatut(SessionStatut.CLOTUREE);
+
+        horlogeDeTest.horloge.avancerA(T0.plusSeconds(20 * 60));
+
+        mockMvc.perform(post("/api/presences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"code\":\"" + code + "\",\"etudiantId\":" + etudiant1 + "}"))
+                .andExpect(status().isGone())
+                .andExpect(jsonPath("$.code").value("CODE_EXPIRE"));
+    }
+
+    @Autowired
+    private SessionRepository sessionRepository;
+
+    private SessionEntity sessionParCode(String code) {
+        return sessionRepository.findByCode(code).orElseThrow();
+    }
+}

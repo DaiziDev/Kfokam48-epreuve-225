@@ -6,4 +6,7 @@ public interface SessionRepository extends JpaRepository<SessionEntity, Long> {
 
     /** Utilisé par le retry de génération de code en cas de collision d'unicité. */
     boolean existsByCode(String code);
+
+    /** EF2/EF3 : retrouver la session visée par un code de présence. */
+    java.util.Optional<SessionEntity> findByCode(String code);
 }

@@ -10,7 +10,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.kfokam48.kfokam48.session.CodeExpireException;
+import com.kfokam48.kfokam48.session.CodeInconnuException;
+import com.kfokam48.kfokam48.session.DejaPresentException;
+import com.kfokam48.kfokam48.session.EtudiantInconnuException;
 import com.kfokam48.kfokam48.session.PromotionInconnueException;
+import com.kfokam48.kfokam48.session.SessionClotureeException;
 
 /**
  * Gestion centralisée des erreurs : TOUTES les réponses d'erreur respectent le
@@ -46,6 +51,41 @@ public class GestionErreursAdvice {
     public ResponseEntity<CorpsErreur> promotionInconnue(PromotionInconnueException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new CorpsErreur("PROMOTION_INCONNUE", exception.getMessage()));
+    }
+
+    /** etudiantId inexistant → 404 ETUDIANT_INCONNU (décision section 7). */
+    @ExceptionHandler(EtudiantInconnuException.class)
+    public ResponseEntity<CorpsErreur> etudiantInconnu(EtudiantInconnuException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new CorpsErreur("ETUDIANT_INCONNU", exception.getMessage()));
+    }
+
+    /** Code sans session → 400 CODE_INCONNU (EF3, D3). */
+    @ExceptionHandler(CodeInconnuException.class)
+    public ResponseEntity<CorpsErreur> codeInconnu(CodeInconnuException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CorpsErreur("CODE_INCONNU", exception.getMessage()));
+    }
+
+    /** Code dont la fenêtre de 15 min est passée → 410 CODE_EXPIRE (EF3, RG1). */
+    @ExceptionHandler(CodeExpireException.class)
+    public ResponseEntity<CorpsErreur> codeExpire(CodeExpireException exception) {
+        return ResponseEntity.status(HttpStatus.GONE)
+                .body(new CorpsErreur("CODE_EXPIRE", exception.getMessage()));
+    }
+
+    /** Session clôturée mais code encore valide → 409 (RG2, décision section 7). */
+    @ExceptionHandler(SessionClotureeException.class)
+    public ResponseEntity<CorpsErreur> sessionCloturee(SessionClotureeException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CorpsErreur("SESSION_CLOTUREE", exception.getMessage()));
+    }
+
+    /** Déjà pointé à cette session → 409 DEJA_PRESENT (EF3). */
+    @ExceptionHandler(DejaPresentException.class)
+    public ResponseEntity<CorpsErreur> dejaPresent(DejaPresentException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CorpsErreur("DEJA_PRESENT", exception.getMessage()));
     }
 
     /** Filet : toute erreur non prévue reste au format { code, message }. */
