@@ -2,6 +2,7 @@ package com.kfokam48.kfokam48.exercice;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -41,6 +42,14 @@ public class ExerciceController {
         return new ExerciceResponse(resultat.id(), resultat.statut());
     }
 
+    /** EF12/RG7 : détail de l'exercice, note et commentaire inclus, jamais le relecteur. */
+    @GetMapping("/{id}")
+    public ExerciceDetailResponse consulter(@PathVariable("id") Long exerciceId) {
+        ExerciceService.ExerciceDetail detail = service.consulter(exerciceId);
+        return new ExerciceDetailResponse(detail.id(), detail.lien(), detail.statut(), detail.note(),
+                detail.commentaire());
+    }
+
     /** Corps du contrat : { sessionId, etudiantId, lien }, tous obligatoires. */
     public record DeposerExerciceRequest(
             @NotNull(message = "Le sessionId est obligatoire.") Long sessionId,
@@ -56,5 +65,14 @@ public class ExerciceController {
 
     /** Réponse 201/200 strictement conforme au contrat : { id, statut }, aucun champ relecteur. */
     public record ExerciceResponse(Long id, ExerciceStatut statut) {
+    }
+
+    /**
+     * Réponse du contrat : { id, lien, statut, note, commentaire }, note et
+     * commentaire nuls tant que la relecture n'est pas rendue. C'est ce DTO,
+     * et non l'entité, qui garantit RG7 : il n'a aucun champ relecteur.
+     */
+    public record ExerciceDetailResponse(Long id, String lien, ExerciceStatut statut, Integer note,
+            String commentaire) {
     }
 }
