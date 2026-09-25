@@ -6,6 +6,7 @@ import java.security.SecureRandom;
 import java.time.Clock;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import com.kfokam48.kfokam48.session.SessionStatut;
  * EF6 : dépôt du lien d'exercice, avec assignation immédiate d'un relecteur
  * tiré au hasard parmi les présents hors auteur (EF8, RG4, RG5, RG6).
  * EF7 : remplacement du lien tant que la relecture n'est pas rendue (RG12).
+ * EF12 : consultation de la note et du commentaire, sans le relecteur (RG7).
  */
 @Service
 public class ExerciceService {
@@ -127,6 +129,25 @@ public class ExerciceService {
     }
 
     /**
+     * EF12/RG7 : l'étudiant consulte son exercice, note et commentaire inclus
+     * une fois la relecture rendue. Rien ici ne lit le relecteur : le détail ne
+     * peut donc pas le laisser fuir, même par erreur de sérialisation.
+     */
+    @Transactional(readOnly = true)
+    public ExerciceDetail consulter(Long exerciceId) {
+        ExerciceEntity exercice = exercices.findById(exerciceId)
+                .orElseThrow(() -> new ExerciceInconnuException(exerciceId));
+
+        // Note et commentaire n'existent qu'une fois la relecture rendue (RG9)
+        Optional<RelectureEntity> rendue = relectures.findByExerciceId(exerciceId)
+                .filter(r -> r.getRendueAt() != null);
+
+        return new ExerciceDetail(exercice.getId(), exercice.getLien(), exercice.getStatut(),
+                rendue.map(RelectureEntity::getNote).orElse(null),
+                rendue.map(RelectureEntity::getCommentaire).orElse(null));
+    }
+
+    /**
      * Le lien est ouvert par le relecteur : on n'accepte qu'une URL absolue
      * http(s) avec un hôte — ni texte libre, ni javascript:, ni file:.
      */
@@ -148,5 +169,9 @@ public class ExerciceService {
     }
 
     public record ExerciceEtat(Long id, ExerciceStatut statut) {
+    }
+
+    /** Aucun champ relecteur, par construction (RG7). */
+    public record ExerciceDetail(Long id, String lien, ExerciceStatut statut, Integer note, String commentaire) {
     }
 }

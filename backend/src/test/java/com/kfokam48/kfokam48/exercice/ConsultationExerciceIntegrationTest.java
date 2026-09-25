@@ -1,0 +1,184 @@
+package com.kfokam48.kfokam48.exercice;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.kfokam48.kfokam48.relecture.RelectureRepository;
+import com.kfokam48.kfokam48.session.EtudiantEntity;
+import com.kfokam48.kfokam48.session.EtudiantRepository;
+import com.kfokam48.kfokam48.session.PromotionEntity;
+import com.kfokam48.kfokam48.session.PromotionRepository;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+
+/**
+ * EF12/RG7 : l'étudiant relu consulte son exercice — note et commentaire une
+ * fois la relecture rendue, jamais l'identité du relecteur.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Transactional
+class ConsultationExerciceIntegrationTest {
+
+    private static final String LIEN = "https://github.com/alice/exercice-algo";
+    /** Seuls champs autorisés par le contrat : tout ajout doit être une décision explicite. */
+    private static final Set<String> CHAMPS_DU_CONTRAT = Set.of("id", "lien", "statut", "note", "commentaire");
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private PromotionRepository promotions;
+
+    @Autowired
+    private EtudiantRepository etudiants;
+
+    @Autowired
+    private RelectureRepository relectures;
+
+    private Long alice;
+    private Long boris;
+    /** Exercice d'Alice, relu par Boris (seul autre présent). */
+    private Long exerciceAlice;
+
+    @BeforeEach
+    void preparer() throws Exception {
+        PromotionEntity promotion = new PromotionEntity();
+        promotion.setNom("KFOKAM48");
+        promotion = promotions.save(promotion);
+        alice = etudiants.save(etudiant(promotion, "Alice")).getId();
+        boris = etudiants.save(etudiant(promotion, "Boris Relecteur")).getId();
+
+        MvcResult session = mockMvc.perform(post("/api/sessions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titre\":\"Algorithmique\",\"promotionId\":" + promotion.getId() + "}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        Long sessionId = lire(session).get("id").asLong();
+
+        for (Long etudiantId : new Long[] { alice, boris }) {
+            mockMvc.perform(post("/api/sessions/" + sessionId + "/presences")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"etudiantId\":" + etudiantId + "}"))
+                    .andExpect(status().isCreated());
+        }
+
+        MvcResult depot = mockMvc.perform(post("/api/exercices")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"sessionId\":" + sessionId + ",\"etudiantId\":" + alice + ",\"lien\":\"" + LIEN + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        exerciceAlice = lire(depot).get("id").asLong();
+    }
+
+    private EtudiantEntity etudiant(PromotionEntity promotion, String nom) {
+        EtudiantEntity e = new EtudiantEntity();
+        e.setPromotion(promotion);
+        e.setNom(nom);
+        return e;
+    }
+
+    private JsonNode lire(MvcResult resultat) throws Exception {
+        return objectMapper.readTree(resultat.getResponse().getContentAsString());
+    }
+
+    private void rendreRelecture(int note, String commentaire) throws Exception {
+        Long relectureId = relectures.findByExerciceId(exerciceAlice).orElseThrow().getId();
+        mockMvc.perform(post("/api/relectures/" + relectureId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"relecteurId\":" + boris + ",\"note\":" + note
+                        + ",\"commentaire\":\"" + commentaire + "\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void avantLaRelectureNoteEtCommentaireSontNuls() throws Exception {
+        mockMvc.perform(get("/api/exercices/" + exerciceAlice))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(exerciceAlice))
+                .andExpect(jsonPath("$.lien").value(LIEN))
+                .andExpect(jsonPath("$.statut").value("EN_ATTENTE_RELECTURE"))
+                .andExpect(jsonPath("$.note").isEmpty())
+                .andExpect(jsonPath("$.commentaire").isEmpty());
+    }
+
+    @Test
+    void apresLaRelectureLEtudiantVoitSaNoteEtLeCommentaire() throws Exception {
+        rendreRelecture(15, "Bonne structure, tests à compléter.");
+
+        mockMvc.perform(get("/api/exercices/" + exerciceAlice))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statut").value("RELU"))
+                .andExpect(jsonPath("$.note").value(15))
+                .andExpect(jsonPath("$.commentaire").value("Bonne structure, tests à compléter."));
+    }
+
+    @Test
+    void laReponseNeContientAucunChampIdentifiantLeRelecteur() throws Exception {
+        rendreRelecture(15, "Relu.");
+
+        MvcResult resultat = mockMvc.perform(get("/api/exercices/" + exerciceAlice))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // RG7 : exactement les champs du contrat — un champ ajouté plus tard fait échouer ce test
+        JsonNode corps = lire(resultat);
+        Set<String> champs = new HashSet<>(corps.propertyNames());
+        assertThat(champs).isEqualTo(CHAMPS_DU_CONTRAT);
+
+        // Et aucune valeur ne trahit le relecteur (nom ou identifiant)
+        String brut = resultat.getResponse().getContentAsString();
+        assertThat(brut).doesNotContainIgnoringCase("relecteur").doesNotContain("Boris");
+        assertThat(corps.get("id").asLong()).isNotEqualTo(boris);
+    }
+
+    @Test
+    void leLienAfficheEstLeDernierDepose() throws Exception {
+        String nouveauLien = "https://gitlab.com/alice/exercice-algo-v2";
+        mockMvc.perform(put("/api/exercices/" + exerciceAlice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"etudiantId\":" + alice + ",\"lien\":\"" + nouveauLien + "\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/exercices/" + exerciceAlice))
+                .andExpect(jsonPath("$.lien").value(nouveauLien));
+    }
+
+    @Test
+    void exerciceInconnuRenvoie404() throws Exception {
+        mockMvc.perform(get("/api/exercices/999999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("EXERCICE_INCONNU"))
+                .andExpect(jsonPath("$.message").isString());
+    }
+
+    @Test
+    void identifiantNonNumeriqueRenvoie400() throws Exception {
+        mockMvc.perform(get("/api/exercices/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PARAMETRE_INVALIDE"));
+    }
+}

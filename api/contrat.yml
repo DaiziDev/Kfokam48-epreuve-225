@@ -286,6 +286,7 @@ paths:
                   statut: { type: string, enum: [EN_ATTENTE_RELECTURE, RELU] }
                   note: { type: integer, nullable: true }
                   commentaire: { type: string, nullable: true }
+        "400": { $ref: "#/components/responses/Erreur" }   # PARAMETRE_INVALIDE (identifiant non numérique)
         "404": { $ref: "#/components/responses/Erreur" }   # EXERCICE_INCONNU
 
   /api/relectures/{id}:

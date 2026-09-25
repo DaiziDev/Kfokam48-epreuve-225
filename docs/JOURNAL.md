@@ -86,6 +86,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
+### EF12 — consultation de la note sans le relecteur
+
+**Fait :** `GET /api/exercices/{id}` (id, lien, statut, note, commentaire ; note et commentaire nuls avant le rendu). RG7 vérifiée par la liste exacte des champs de la réponse plutôt que par l'absence d'un mot : tout champ ajouté plus tard fait échouer le test. Limite trouvée en vérifiant RG7 : sans authentification (Q1), `GET /api/relectures?relecteurId=` permet de deviner son relecteur en essayant tous les identifiants — documentée en section 7 comme limite v0.1. 6 tests nouveaux, 83/83 verts.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe

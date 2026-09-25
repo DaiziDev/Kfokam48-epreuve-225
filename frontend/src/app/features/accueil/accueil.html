@@ -24,7 +24,7 @@
       {{ 'accueil.sous-titre' | t }}
     </p>
 
-    <div class="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row" [appReveal]>
+    <div class="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row" appReveal>
       <a routerLink="/etudiant" class="btn-primary px-6 py-3 text-base">
         {{ 'accueil.cta-primaire' | t }}
         <ui-icon name="arrow-right" class="text-base" />
@@ -59,12 +59,12 @@
 <!-- ============ STATS / RÈGLES DU JEU ============ -->
 <section class="border-y border-slate-200 bg-white px-4 py-16">
   <div class="mx-auto max-w-3xl">
-    <h2 class="text-center text-2xl font-semibold tracking-tight text-slate-900" [appReveal]>
+    <h2 class="text-center text-2xl font-semibold tracking-tight text-slate-900" appReveal>
       {{ 'accueil.stats-titre' | t }}
     </h2>
     <div class="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4">
       @for (stat of stats; track stat.cleTexte) {
-        <div class="text-center" [appReveal] [appRevealDelay]="$index * 100">
+        <div class="text-center" appReveal [appRevealDelay]="$index * 100">
           <p class="text-4xl font-bold text-brand-600">
             <span appCompteur [appCompteur]="stat.valeur">0</span>
           </p>
@@ -78,12 +78,12 @@
 <!-- ============ COMMENT ÇA MARCHE ============ -->
 <section class="px-4 py-16">
   <div class="mx-auto max-w-3xl">
-    <h2 class="text-center text-2xl font-semibold tracking-tight text-slate-900" [appReveal]>
+    <h2 class="text-center text-2xl font-semibold tracking-tight text-slate-900" appReveal>
       {{ 'accueil.comment-titre' | t }}
     </h2>
     <div class="mt-10 grid gap-4 sm:grid-cols-3">
       @for (etape of etapes; track etape.cleTitre) {
-        <article class="card p-6" [appReveal] [appRevealDelay]="$index * 120">
+        <article class="card p-6" appReveal [appRevealDelay]="$index * 120">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
             <ui-icon [name]="etape.icone" class="text-xl" />
           </div>
@@ -99,12 +99,12 @@
 <!-- ============ GARANTIES ============ -->
 <section class="border-y border-slate-200 bg-white px-4 py-16">
   <div class="mx-auto max-w-3xl">
-    <h2 class="text-center text-2xl font-semibold tracking-tight text-slate-900" [appReveal]>
+    <h2 class="text-center text-2xl font-semibold tracking-tight text-slate-900" appReveal>
       {{ 'accueil.garanties-titre' | t }}
     </h2>
     <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       @for (garantie of garanties; track garantie.cleTitre) {
-        <article class="card p-5" [appReveal] [appRevealDelay]="($index % 3) * 90">
+        <article class="card p-5" appReveal [appRevealDelay]="($index % 3) * 90">
           <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
             <ui-icon [name]="garantie.icone" class="text-lg" />
           </div>
@@ -118,7 +118,7 @@
 
 <!-- ============ CTA FINAL ============ -->
 <section class="px-4 py-20">
-  <div class="mx-auto max-w-2xl rounded-card border border-brand-200 bg-gradient-to-br from-brand-50 via-white to-brand-50 p-8 text-center shadow-card" [appReveal]>
+  <div class="mx-auto max-w-2xl rounded-card border border-brand-200 bg-gradient-to-br from-brand-50 via-white to-brand-50 p-8 text-center shadow-card" appReveal>
     <h2 class="text-2xl font-semibold tracking-tight text-slate-900">{{ 'accueil.cta-final-texte' | t }}</h2>
     <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
       <a routerLink="/etudiant" class="btn-primary px-6 py-3">
