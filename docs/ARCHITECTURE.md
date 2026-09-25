@@ -44,13 +44,11 @@ com.kfokam48.kfokam48
 ├── conf/        Clock, OpenAPI (transverse)
 ├── session/     sessions, étudiants, présences : contrôleurs, services, entités, repos, exceptions
 ├── exercice/    dépôt et remplacement du lien, tirage du relecteur (EF6–EF8)
-├── relecture/   rendu de la relecture, liste des relectures d'un relecteur (EF9–EF11)
-└── tableau/     tableau de suivi (EF16) : lecture seule, agrégats JPQL via EntityManager
+└── relecture/   entité et repository de la relecture (rendu EF9 à venir)
 ```
 
-Les présences sont restées dans `session/` (fortement liées au code de session).
-`tableau/` ne possède aucune entité : il agrège celles des autres domaines en 5 requêtes
-`GROUP BY` fixes (ENF2) et calcule la moyenne côté API (ENF3).
+Les présences sont restées dans `session/` (fortement liées au code de session). Le
+domaine suivant, `tableau/`, suivra la même logique.
 
 ### Base de données
 

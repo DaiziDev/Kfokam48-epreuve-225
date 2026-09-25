@@ -22,7 +22,7 @@ import { CodeInput } from '../../ui/code-input/code-input';
       <p class="tagline">{{ 'etudiant.tagline' | t }}</p>
 
       <div class="mt-6">
-        <label for="code-presence" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+        <label for="code-presence" class="mb-2 block text-sm font-medium text-slate-700">
           {{ 'etudiant.etiquette-code' | t }}
         </label>
         <ui-code-input

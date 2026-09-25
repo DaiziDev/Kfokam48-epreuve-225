@@ -1,61 +1,47 @@
 <div class="flex min-h-dvh flex-col bg-slate-50">
-  <header class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <header class="border-b border-slate-200 bg-white">
     <div class="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
       <div class="flex items-center gap-2">
-        <ui-icon name="graduation-cap" class="text-xl text-brand-600 dark:text-brand-400" />
-        <span class="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+        <ui-icon name="graduation-cap" class="text-xl text-brand-600" />
+        <span class="text-sm font-semibold tracking-tight text-slate-900">
           {{ 'app.titre' | t }}
         </span>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          class="btn-secondary !px-3 !py-1.5"
-          (click)="basculerTheme()"
-          [attr.aria-label]="'nav.theme' | t"
-        >
-          @if (estSombre()) {
-            <ui-icon name="sun" class="text-base" />
-          } @else {
-            <ui-icon name="moon" class="text-base" />
-          }
-        </button>
-        <button
-          type="button"
-          class="btn-secondary !px-3 !py-1.5"
-          (click)="basculerLangue()"
-          [attr.aria-label]="'nav.langue' | t"
-        >
-          <ui-icon name="globe" class="text-base" />
-          <span class="font-mono text-xs font-semibold">{{ estFrancais() ? 'EN' : 'FR' }}</span>
-        </button>
-      </div>
+      <button
+        type="button"
+        class="btn-secondary !px-3 !py-1.5"
+        (click)="basculerLangue()"
+        [attr.aria-label]="'nav.langue' | t"
+      >
+        <ui-icon name="globe" class="text-base" />
+        <span class="font-mono text-xs font-semibold">{{ estFrancais() ? 'EN' : 'FR' }}</span>
+      </button>
     </div>
   </header>
 
-  <nav class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+  <nav class="border-b border-slate-200 bg-white">
     <div class="mx-auto flex max-w-3xl">
       <a
         routerLink="/etudiant"
-        routerLinkActive="border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300"
-        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        routerLinkActive="border-brand-600 text-brand-700"
+        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900"
       >
         <ui-icon name="scan-line" class="text-base" />
         {{ 'nav.etudiant' | t }}
       </a>
       <a
         routerLink="/relecteur"
-        routerLinkActive="border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300"
-        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        routerLinkActive="border-brand-600 text-brand-700"
+        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900"
       >
         <ui-icon name="clipboard-check" class="text-base" />
         {{ 'nav.relecteur' | t }}
       </a>
       <a
         routerLink="/formateur"
-        routerLinkActive="border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300"
-        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        routerLinkActive="border-brand-600 text-brand-700"
+        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900"
       >
         <ui-icon name="table-2" class="text-base" />
         {{ 'nav.formateur' | t }}
