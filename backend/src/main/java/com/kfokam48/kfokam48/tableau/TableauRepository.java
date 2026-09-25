@@ -50,22 +50,21 @@ public class TableauRepository {
     }
 
     /**
-     * Somme et nombre des notes reçues sur les relectures rendues, par auteur.
-     * Pas d'AVG en base : sur une colonne entière, son type de résultat varie
-     * selon le SGBD (H2 / PostgreSQL) — la division se fait en Java.
+     * Notes regroupées par exercice afin que deux relectures ne pèsent qu'une fois.
      */
-    public Map<Long, SommeNotes> notesRecuesParAuteur(Long promotionId) {
+    public Map<Long, List<NotesExercice>> notesRecuesParAuteur(Long promotionId) {
         List<Object[]> lignes = entityManager.createQuery(
-                "select e.auteur.id, sum(r.note), count(r) from RelectureEntity r join r.exercice e "
+                "select e.auteur.id, e.id, sum(r.note), count(r) from RelectureEntity r join r.exercice e "
                         + "where e.auteur.promotion.id = :promotionId and r.rendueAt is not null "
-                        + "group by e.auteur.id",
+                        + "group by e.auteur.id, e.id",
                 Object[].class)
                 .setParameter("promotionId", promotionId)
                 .getResultList();
-        Map<Long, SommeNotes> resultat = new HashMap<>();
+        Map<Long, List<NotesExercice>> resultat = new HashMap<>();
         for (Object[] ligne : lignes) {
-            resultat.put((Long) ligne[0],
-                    new SommeNotes(((Number) ligne[1]).longValue(), ((Number) ligne[2]).longValue()));
+            resultat.computeIfAbsent((Long) ligne[0], ignored -> new java.util.ArrayList<>())
+                    .add(new NotesExercice((Long) ligne[1], ((Number) ligne[2]).longValue(),
+                            ((Number) ligne[3]).longValue()));
         }
         return resultat;
     }
@@ -81,6 +80,6 @@ public class TableauRepository {
         return resultat;
     }
 
-    public record SommeNotes(long somme, long nombre) {
+    public record NotesExercice(Long exerciceId, long somme, long nombre) {
     }
 }

@@ -5,6 +5,11 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Modifié — backend de la double relecture (ticket #23)
+- Chaque nouvel exercice est attribué à deux relecteurs présents, distincts de l'auteur et l'un de l'autre ; `422 AUCUN_RELECTEUR_DISPONIBLE` s'il n'y a pas deux candidats éligibles.
+- Premier rendu : note provisoire. Second rendu : note finale égale à la moyenne des deux, exercice `RELU`. `GET /api/exercices/{id}` expose `noteProvisoire` et les `commentaires` sans identité de relecteur ; `GET /api/tableau` expose `moyenneProvisoire`.
+- Migration `V7__deux_relectures_par_exercice.sql` (nouvelle, aucune migration existante modifiée) : les relectures et notes existantes sont conservées (rang 1) et un second relecteur est ajouté quand un présent éligible existe. Vérifié par un test qui migre une base v6 peuplée.
+
 ### Ajouté
 - **Design system frontend** (benchmark documenté dans `docs/DESIGN.md`) : tokens Tailwind 4 (`@theme`) — indigo de marque, statuts sémantiques emerald/amber/red, typo Inter + mono ; composants `ui-icon` (SVG Lucide inlinés, zéro emoji, zéro dépendance), `ui-badge-statut`, `ui-code-input` (6 cases, collage, navigation clavier, CVA) ; i18n FR/EN par signals avec bascule instantanée.
 - **Socle frontend** : couche API complète (services et types pour toutes les opérations du contrat, testés verbe + chemin + corps) ; sélecteur d'identité « Je suis » (fin des `etudiantId: 1` / `promotionId: 1` en dur) ; 26 codes d'erreur du contrat traduits FR/EN via le pipe `erreurApi`.

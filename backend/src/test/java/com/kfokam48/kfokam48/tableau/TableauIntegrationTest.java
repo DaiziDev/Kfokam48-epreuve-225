@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kfokam48.kfokam48.relecture.RelectureEntity;
 import com.kfokam48.kfokam48.relecture.RelectureRepository;
 import com.kfokam48.kfokam48.session.EtudiantEntity;
 import com.kfokam48.kfokam48.session.EtudiantRepository;
@@ -37,14 +38,15 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * EF16 : tableau de suivi. Scénario déterministe — avec deux présents par
- * session, le tirage du relecteur n'a qu'une issue, donc chaque chiffre du
- * tableau est connu à l'avance :
+ * EF16 : tableau de suivi. Scénario déterministe — chaque dépôt porte deux
+ * relectures ; la relecture de rang 1 est rendue, celle de rang 2 jamais, donc
+ * chaque chiffre du tableau est connu à l'avance :
  *
- * S1 (Alice, Boris)  : Alice dépose → Boris la note 15 ; Boris dépose → Alice ne rend pas.
- * S2 (Alice, Chloé*) : Alice dépose → Chloé la note 12.      (* présence par code)
- * S3 (Alice, Denis)  : Alice dépose → Denis la note 14.
- * Fanny : aucune activité. Autre promotion : Eva et Gaston, activité isolée.
+ * S1 (Alice, Boris, Chloé)  : Boris relit Alice 15 ; Chloé relit Boris 11 ;
+ *                             les secondes relectures ne sont pas rendues.
+ * S2 (Alice, Chloé*, Denis) : Chloé relit Alice 12.   (* présence par code)
+ * S3 (Alice, Denis, Boris)  : Denis relit Alice 14.
+ * Fanny : aucune activité. Autre promotion : Eva, Gaston et Hélène, activité isolée.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -54,7 +56,7 @@ import tools.jackson.databind.ObjectMapper;
 class TableauIntegrationTest {
 
     private static final Set<String> CHAMPS_DU_CONTRAT = Set.of("etudiantId", "nom", "presences",
-            "exercicesDeposes", "moyenne", "relecturesEnAttente");
+            "exercicesDeposes", "moyenne", "moyenneProvisoire", "relecturesEnAttente");
 
     @TestConfiguration
     static class HorlogeFiguee {
@@ -89,6 +91,7 @@ class TableauIntegrationTest {
     private Long fanny;
     private Long eva;
     private Long gaston;
+    private Long helene;
 
     @BeforeEach
     void preparer() {
@@ -104,6 +107,7 @@ class TableauIntegrationTest {
         autrePromotionId = autre.getId();
         eva = etudiants.save(etudiant(autre, "Eva")).getId();
         gaston = etudiants.save(etudiant(autre, "Gaston")).getId();
+        helene = etudiants.save(etudiant(autre, "Hélène")).getId();
     }
 
     private PromotionEntity promotion(String nom) {
@@ -154,11 +158,27 @@ class TableauIntegrationTest {
                 .andReturn()).get("id").asLong();
     }
 
-    private void rendre(Long exerciceId, Long relecteurId, int note) throws Exception {
-        Long relectureId = relectures.findByExerciceId(exerciceId).orElseThrow().getId();
+    private Long rendre(Long exerciceId, Long relecteurId, int note) throws Exception {
+        Long relectureId = relectures.findByExerciceIdOrderByRangAsc(exerciceId).stream()
+                .filter(r -> r.getRelecteur().getId().equals(relecteurId)).findFirst().orElseThrow().getId();
         mockMvc.perform(post("/api/relectures/" + relectureId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"relecteurId\":" + relecteurId + ",\"note\":" + note + ",\"commentaire\":\"Relu.\"}"))
+                .andExpect(status().isOk());
+        return relectureId;
+    }
+
+    private Long relectureDe(Long exerciceId, Long relecteurId) {
+        return relectures.findByExerciceIdOrderByRangAsc(exerciceId).stream()
+                .filter(r -> r.getRelecteur().getId().equals(relecteurId))
+                .findFirst().orElseThrow().getId();
+    }
+
+    private void rendreRelecture(Long relectureId, Long relecteurId, int note) throws Exception {
+        mockMvc.perform(post("/api/relectures/" + relectureId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"relecteurId\":" + relecteurId + ",\"note\":" + note
+                        + ",\"commentaire\":\"Relu.\"}"))
                 .andExpect(status().isOk());
     }
 
@@ -167,23 +187,40 @@ class TableauIntegrationTest {
         Long s1 = creerSession(promotionId).get("id").asLong();
         presenceManuelle(s1, alice);
         presenceManuelle(s1, boris);
-        rendre(deposer(s1, alice), boris, 15);
-        deposer(s1, boris); // relu par Alice, jamais rendu
+        presenceManuelle(s1, chloe);
+
+        Long exerciceAliceS1 = deposer(s1, alice);
+        Long exerciceBorisS1 = deposer(s1, boris);
+        deposer(s1, chloe); // ses secondes relectures ne seront pas rendues
+
+        // Rang 1 rendu sur chaque exercice ; les secondes relectures jamais.
+        rendreRelecture(relectureDe(exerciceAliceS1, boris), boris, 15);
+        rendreRelecture(relectureDe(exerciceBorisS1, chloe), chloe, 11);
+        rendreRelecture(relectureDe(exerciceAliceS1, chloe), chloe, 12);
 
         JsonNode s2 = creerSession(promotionId);
         presenceManuelle(s2.get("id").asLong(), alice);
         presenceParCode(s2.get("code").asString(), chloe);
-        rendre(deposer(s2.get("id").asLong(), alice), chloe, 12);
+        presenceManuelle(s2.get("id").asLong(), denis);
+
+        Long exerciceAliceS2 = deposer(s2.get("id").asLong(), alice);
+        rendreRelecture(relectureDe(exerciceAliceS2, chloe), chloe, 12);
 
         Long s3 = creerSession(promotionId).get("id").asLong();
         presenceManuelle(s3, alice);
         presenceManuelle(s3, denis);
-        rendre(deposer(s3, alice), denis, 14);
+        presenceManuelle(s3, boris);
+
+        Long exerciceAliceS3 = deposer(s3, alice);
+        rendreRelecture(relectureDe(exerciceAliceS3, denis), denis, 14);
 
         Long autre = creerSession(autrePromotionId).get("id").asLong();
         presenceManuelle(autre, eva);
         presenceManuelle(autre, gaston);
-        rendre(deposer(autre, eva), gaston, 20);
+        presenceManuelle(autre, helene);
+
+        Long exerciceEva = deposer(autre, eva);
+        rendreRelecture(relectureDe(exerciceEva, gaston), gaston, 20);
     }
 
     @Test
@@ -193,26 +230,29 @@ class TableauIntegrationTest {
         mockMvc.perform(get("/api/tableau").param("promotionId", promotionId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(5))
-                // Alice : 3 présences, 3 dépôts, (15+12+14)/3 = 13.666… → 13.67, doit encore relire Boris
+                // Alice : 3 présences, 3 dépôts, ((15+12)/2 + 12 + 14)/3 = 13.166… → 13.17,
+                // 2 relectures en attente (rang 2 des sessions S1 et S3)
                 .andExpect(jsonPath("$[0].etudiantId").value(alice))
                 .andExpect(jsonPath("$[0].nom").value("Alice"))
                 .andExpect(jsonPath("$[0].presences").value(3))
                 .andExpect(jsonPath("$[0].exercicesDeposes").value(3))
-                .andExpect(jsonPath("$[0].moyenne").value(13.67))
-                .andExpect(jsonPath("$[0].relecturesEnAttente").value(1))
-                // Boris : son exercice n'est pas encore relu → moyenne nulle (RG10)
+                .andExpect(jsonPath("$[0].moyenne").value(13.17))
+                .andExpect(jsonPath("$[0].moyenneProvisoire").value(true))
+                .andExpect(jsonPath("$[0].relecturesEnAttente").value(2))
+                // Boris : exercice relu par Chloé (11, provisoire) → moyenne 11 (RG10 : rendue seulement)
                 .andExpect(jsonPath("$[1].etudiantId").value(boris))
-                .andExpect(jsonPath("$[1].presences").value(1))
+                .andExpect(jsonPath("$[1].presences").value(2))
                 .andExpect(jsonPath("$[1].exercicesDeposes").value(1))
-                .andExpect(jsonPath("$[1].moyenne").isEmpty())
-                .andExpect(jsonPath("$[1].relecturesEnAttente").value(0))
-                // Chloé : présente par code (source ETUDIANT), relecture rendue
+                .andExpect(jsonPath("$[1].moyenne").value(11.0))
+                .andExpect(jsonPath("$[1].moyenneProvisoire").value(true))
+                .andExpect(jsonPath("$[1].relecturesEnAttente").value(2))
+                // Chloé : présente par code (source ETUDIANT), 3 relectures rendues, aucune déposée
                 .andExpect(jsonPath("$[2].etudiantId").value(chloe))
-                .andExpect(jsonPath("$[2].presences").value(1))
-                .andExpect(jsonPath("$[2].exercicesDeposes").value(0))
+                .andExpect(jsonPath("$[2].presences").value(2))
+                .andExpect(jsonPath("$[2].exercicesDeposes").value(1))
                 .andExpect(jsonPath("$[2].relecturesEnAttente").value(0))
                 .andExpect(jsonPath("$[3].etudiantId").value(denis))
-                .andExpect(jsonPath("$[3].presences").value(1))
+                .andExpect(jsonPath("$[3].presences").value(2))
                 // Fanny : aucune activité, figure quand même avec des zéros
                 .andExpect(jsonPath("$[4].etudiantId").value(fanny))
                 .andExpect(jsonPath("$[4].presences").value(0))
@@ -227,12 +267,13 @@ class TableauIntegrationTest {
 
         mockMvc.perform(get("/api/tableau").param("promotionId", autrePromotionId.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$[0].etudiantId").value(eva))
                 .andExpect(jsonPath("$[0].presences").value(1))
                 .andExpect(jsonPath("$[0].moyenne").value(20.0))
                 .andExpect(jsonPath("$[1].etudiantId").value(gaston))
-                .andExpect(jsonPath("$[1].relecturesEnAttente").value(0));
+                .andExpect(jsonPath("$[1].relecturesEnAttente").value(0))
+                .andExpect(jsonPath("$[2].etudiantId").value(helene));
     }
 
     @Test

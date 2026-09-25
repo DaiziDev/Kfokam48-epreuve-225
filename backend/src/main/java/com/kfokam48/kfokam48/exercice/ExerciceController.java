@@ -58,7 +58,7 @@ public class ExerciceController {
     public ExerciceDetailResponse consulter(@PathVariable("id") Long exerciceId) {
         ExerciceService.ExerciceDetail detail = service.consulter(exerciceId);
         return new ExerciceDetailResponse(detail.id(), detail.lien(), detail.statut(), detail.note(),
-                detail.commentaire());
+                detail.noteProvisoire(), detail.commentaires());
     }
 
     /** Corps du contrat : { sessionId, etudiantId, lien }, tous obligatoires. */
@@ -88,7 +88,7 @@ public class ExerciceController {
      * commentaire nuls tant que la relecture n'est pas rendue. C'est ce DTO,
      * et non l'entité, qui garantit RG7 : il n'a aucun champ relecteur.
      */
-    public record ExerciceDetailResponse(Long id, String lien, ExerciceStatut statut, Integer note,
-            String commentaire) {
+    public record ExerciceDetailResponse(Long id, String lien, ExerciceStatut statut, java.math.BigDecimal note,
+            boolean noteProvisoire, List<String> commentaires) {
     }
 }

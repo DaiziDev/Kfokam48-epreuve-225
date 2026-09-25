@@ -12,6 +12,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -153,12 +155,19 @@ class ExerciceControllerIntegrationTest {
         return relecture.getRelecteur().getId();
     }
 
+    /** Les relecteurs de l'exercice, dans l'ordre des rangs. */
+    private List<Long> relecteursDe(Long exerciceId) {
+        return relectures.findByExerciceIdOrderByRangAsc(exerciceId).stream()
+                .map(r -> r.getRelecteur().getId())
+                .toList();
+    }
+
     // --- EF6/EF8 : dépôt ---
 
     @Test
     void depotCreeUnExerciceEnAttenteDeRelectureSansExposerLeRelecteur() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
 
         deposer(sessionId, alice, LIEN)
                 .andExpect(status().isCreated())
@@ -168,13 +177,13 @@ class ExerciceControllerIntegrationTest {
     }
 
     @Test
-    void depotAssigneLeSeulAutrePresentCommeRelecteur() throws Exception {
+    void depotAssigneDeuxAutresPresentsCommeRelecteurs() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
 
         Long exerciceId = deposerEtRetournerId(sessionId, alice);
 
-        assertThat(relecteurDe(exerciceId)).isEqualTo(boris);
+        assertThat(relecteursDe(exerciceId)).containsExactlyInAnyOrder(boris, chloe);
     }
 
     @Test
@@ -185,41 +194,70 @@ class ExerciceControllerIntegrationTest {
             Long sessionId = creerSession();
             marquerPresents(sessionId, alice, boris, chloe);
             for (Long auteur : presents) {
-                Long relecteur = relecteurDe(deposerEtRetournerId(sessionId, auteur));
-                assertThat(relecteur).isNotEqualTo(auteur).isIn(presents); // RG4, RG6
+                List<Long> relecteurs = relecteursDe(deposerEtRetournerId(sessionId, auteur));
+                assertThat(relecteurs).hasSize(2).doesNotHaveDuplicates();
+                assertThat(relecteurs).doesNotContain(auteur).isSubsetOf(presents); // RG4, RG6
             }
         }
     }
 
     @Test
-    void chaqueExerciceAExactementUnRelecteur() throws Exception {
+    void chaqueExerciceAExactementDeuxRelecteursDistincts() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris, chloe);
+        marquerPresents(sessionId, alice, boris, chloe, denis);
 
-        for (Long auteur : List.of(alice, boris, chloe)) {
-            assertThat(relectures.countByExerciceId(deposerEtRetournerId(sessionId, auteur))).isEqualTo(1); // RG5
+        for (Long auteur : List.of(alice, boris, chloe, denis)) {
+            Long exerciceId = deposerEtRetournerId(sessionId, auteur);
+            List<RelectureEntity> relecturesExercice = relectures.findByExerciceIdOrderByRangAsc(exerciceId);
+            assertThat(relecturesExercice).hasSize(2); // RG5 révisé
+            assertThat(relecturesExercice.get(0).getRang()).isEqualTo(1);
+            assertThat(relecturesExercice.get(1).getRang()).isEqualTo(2);
+            Set<Long> relecteurs = relecturesExercice.stream().map(r -> r.getRelecteur().getId())
+                    .collect(Collectors.toSet());
+            assertThat(relecteurs).hasSize(2); // distincts l'un de l'autre
+            assertThat(relecteurs).doesNotContain(auteur); // distincts de l'auteur (RG4)
         }
     }
 
     @Test
-    void laBaseRefuseUnDeuxiemeRelecteurPourLeMemeExercice() throws Exception {
-        // RG5 garanti aussi en base (uq_relecture_exercice), pas seulement par le service
+    void laBaseRefuseDeuxRelecturesDuMemeRelecteurPourLeMemeExercice() throws Exception {
+        // RG5 révisé, garanti aussi en base (uq_relecture_exercice_relecteur)
         Long sessionId = creerSession();
         marquerPresents(sessionId, alice, boris, chloe);
         Long exerciceId = deposerEtRetournerId(sessionId, alice);
 
+        Long premierRelecteur = relectures.findByExerciceIdOrderByRangAsc(exerciceId).get(0)
+                .getRelecteur().getId();
         RelectureEntity doublon = new RelectureEntity();
         doublon.setExercice(exercices.getReferenceById(exerciceId));
-        doublon.setRelecteur(etudiants.getReferenceById(chloe));
+        doublon.setRelecteur(etudiants.getReferenceById(premierRelecteur));
+        doublon.setRang(2);
 
         assertThatThrownBy(() -> relectures.saveAndFlush(doublon))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
-    void depotSansAutrePresentRenvoie422() throws Exception {
+    void laBaseRefuseUnTroisiemeRangPourLeMemeExercice() throws Exception {
+        // Exactement deux relectures : le rang 3 est refusé en base
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice);
+        marquerPresents(sessionId, alice, boris, chloe, denis);
+        Long exerciceId = deposerEtRetournerId(sessionId, alice);
+
+        RelectureEntity troisieme = new RelectureEntity();
+        troisieme.setExercice(exercices.getReferenceById(exerciceId));
+        troisieme.setRelecteur(etudiants.getReferenceById(denis));
+        troisieme.setRang(3);
+
+        assertThatThrownBy(() -> relectures.saveAndFlush(troisieme))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void depotSansDeuxAutresPresentsRenvoie422() throws Exception {
+        // Seuls deux présents (l'auteur et un autre) : impossible d'assigner deux relecteurs
+        Long sessionId = creerSession();
+        marquerPresents(sessionId, alice, boris);
 
         deposer(sessionId, alice, LIEN)
                 .andExpect(status().isUnprocessableContent())
@@ -229,19 +267,31 @@ class ExerciceControllerIntegrationTest {
     }
 
     @Test
-    void depotResteRefuseJusquAuPremierAutrePresentPuisAccepte() throws Exception {
+    void depotSansAucunAutrePresentRenvoie422() throws Exception {
+        Long sessionId = creerSession();
+        marquerPresents(sessionId, alice);
+
+        deposer(sessionId, alice, LIEN)
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.code").value("AUCUN_RELECTEUR_DISPONIBLE"));
+    }
+
+    @Test
+    void depotResteRefuseJusquaDeuxAutresPresentsPuisAccepte() throws Exception {
         Long sessionId = creerSession();
         deposer(sessionId, alice, LIEN).andExpect(status().isUnprocessableContent());
 
         marquerPresents(sessionId, boris);
+        deposer(sessionId, alice, LIEN).andExpect(status().isUnprocessableContent());
 
+        marquerPresents(sessionId, chloe);
         deposer(sessionId, alice, LIEN).andExpect(status().isCreated());
     }
 
     @Test
     void deuxiemeDepotRenvoie409ExerciceDejaDepose() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
         deposer(sessionId, alice, LIEN).andExpect(status().isCreated());
 
         deposer(sessionId, alice, AUTRE_LIEN)
@@ -252,7 +302,7 @@ class ExerciceControllerIntegrationTest {
     @Test
     void depotSurSessionClotureeRenvoie409() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
         mockMvc.perform(patch("/api/sessions/" + sessionId + "/cloture")).andExpect(status().isOk());
 
         deposer(sessionId, alice, LIEN)
@@ -270,7 +320,7 @@ class ExerciceControllerIntegrationTest {
     @Test
     void depotParEtudiantInconnuOuHorsPromotionRenvoie404() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
 
         deposer(sessionId, 999999L, LIEN)
                 .andExpect(status().isNotFound())
@@ -284,17 +334,20 @@ class ExerciceControllerIntegrationTest {
     void depotParUnAuteurAbsentEstAccepte() throws Exception {
         // Aucune règle n'exige la présence de l'auteur (section 7)
         Long sessionId = creerSession();
-        marquerPresents(sessionId, boris, chloe);
+        marquerPresents(sessionId, boris, chloe, denis);
 
         Long exerciceId = deposerEtRetournerId(sessionId, alice);
 
-        assertThat(relecteurDe(exerciceId)).isIn(boris, chloe);
+        assertThat(relecteursDe(exerciceId)).hasSize(2) // deux relecteurs tirés parmi les trois présents
+                .isSubsetOf(List.of(boris, chloe, denis))
+                .doesNotHaveDuplicates()
+                .doesNotContain(alice);
     }
 
     @Test
     void lienInvalideRenvoie400() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
 
         for (String lien : List.of("pas une url", "github.com/alice", "ftp://serveur/exo",
                 "javascript:alert(1)", "https://")) {
@@ -316,11 +369,11 @@ class ExerciceControllerIntegrationTest {
     // --- EF7/RG12 : remplacement ---
 
     @Test
-    void remplacementChangeLeLienEtGardeLeRelecteur() throws Exception {
+    void remplacementChangeLeLienEtGardeLesRelecteurs() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris, chloe);
+        marquerPresents(sessionId, alice, boris, chloe, denis);
         Long exerciceId = deposerEtRetournerId(sessionId, alice);
-        Long relecteurAvant = relecteurDe(exerciceId);
+        List<Long> relecteursAvant = relecteursDe(exerciceId);
 
         remplacer(exerciceId, alice, AUTRE_LIEN)
                 .andExpect(status().isOk())
@@ -328,14 +381,14 @@ class ExerciceControllerIntegrationTest {
                 .andExpect(jsonPath("$.statut").value("EN_ATTENTE_RELECTURE"));
 
         assertThat(exercices.findById(exerciceId).orElseThrow().getLien()).isEqualTo(AUTRE_LIEN);
-        assertThat(relecteurDe(exerciceId)).isEqualTo(relecteurAvant);
+        assertThat(relecteursDe(exerciceId)).isEqualTo(relecteursAvant);
     }
 
     @Test
     void remplacementPossibleApresClotureDeLaSession() throws Exception {
         // RG12 : indépendant de la clôture, contrairement au dépôt (RG11)
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
         Long exerciceId = deposerEtRetournerId(sessionId, alice);
         mockMvc.perform(patch("/api/sessions/" + sessionId + "/cloture")).andExpect(status().isOk());
 
@@ -345,10 +398,12 @@ class ExerciceControllerIntegrationTest {
     @Test
     void remplacementApresRelectureRendueRenvoie409() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
         Long exerciceId = deposerEtRetournerId(sessionId, alice);
-        // Le rendu de relecture (EF9) viendra avec son ticket : on pose l'état
-        exercices.findById(exerciceId).orElseThrow().setStatut(ExerciceStatut.RELU);
+        RelectureEntity rendue = relectures.findByExerciceIdOrderByRangAsc(exerciceId).get(0);
+        rendue.setNote(15);
+        rendue.setCommentaire("Déjà rendu.");
+        rendue.setRendueAt(Instant.now());
 
         remplacer(exerciceId, alice, AUTRE_LIEN)
                 .andExpect(status().isConflict())
@@ -359,7 +414,7 @@ class ExerciceControllerIntegrationTest {
     @Test
     void remplacementParUnAutreEtudiantRenvoie403() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
         Long exerciceId = deposerEtRetournerId(sessionId, alice);
 
         remplacer(exerciceId, boris, AUTRE_LIEN)
@@ -377,7 +432,7 @@ class ExerciceControllerIntegrationTest {
     @Test
     void remplacementAvecLienInvalideRenvoie400() throws Exception {
         Long sessionId = creerSession();
-        marquerPresents(sessionId, alice, boris);
+        marquerPresents(sessionId, alice, boris, chloe);
         Long exerciceId = deposerEtRetournerId(sessionId, alice);
 
         remplacer(exerciceId, alice, "pas une url")

@@ -34,7 +34,7 @@ public class TableauService {
 
         Map<Long, Long> presences = tableau.presencesParEtudiant(promotionId);
         Map<Long, Long> exercices = tableau.exercicesParAuteur(promotionId);
-        Map<Long, TableauRepository.SommeNotes> notes = tableau.notesRecuesParAuteur(promotionId);
+        Map<Long, List<TableauRepository.NotesExercice>> notes = tableau.notesRecuesParAuteur(promotionId);
         Map<Long, Long> enAttente = tableau.relecturesEnAttenteParRelecteur(promotionId);
 
         // Un étudiant sans aucune activité figure quand même, avec des zéros
@@ -43,6 +43,7 @@ public class TableauService {
                         presences.getOrDefault(e.getId(), 0L).intValue(),
                         exercices.getOrDefault(e.getId(), 0L).intValue(),
                         moyenne(notes.get(e.getId())),
+                        notes.getOrDefault(e.getId(), List.of()).stream().anyMatch(n -> n.nombre() == 1),
                         enAttente.getOrDefault(e.getId(), 0L).intValue()))
                 .toList();
     }
@@ -51,15 +52,17 @@ public class TableauService {
      * Moyenne des notes reçues sur les relectures rendues, arrondie à 2
      * décimales (demi supérieur) ; nulle tant qu'aucune note n'est reçue (RG10).
      */
-    static BigDecimal moyenne(TableauRepository.SommeNotes notes) {
-        if (notes == null || notes.nombre() == 0) {
+    static BigDecimal moyenne(List<TableauRepository.NotesExercice> notes) {
+        if (notes == null || notes.isEmpty()) {
             return null;
         }
-        return BigDecimal.valueOf(notes.somme())
-                .divide(BigDecimal.valueOf(notes.nombre()), 2, RoundingMode.HALF_UP);
+        BigDecimal somme = notes.stream().map(n -> BigDecimal.valueOf(n.somme())
+                .divide(BigDecimal.valueOf(n.nombre()), 2, RoundingMode.HALF_UP))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return somme.divide(BigDecimal.valueOf(notes.size()), 2, RoundingMode.HALF_UP);
     }
 
     public record LigneTableau(Long etudiantId, String nom, int presences, int exercicesDeposes,
-            BigDecimal moyenne, int relecturesEnAttente) {
+            BigDecimal moyenne, boolean moyenneProvisoire, int relecturesEnAttente) {
     }
 }
