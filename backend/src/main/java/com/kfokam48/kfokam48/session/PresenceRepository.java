@@ -15,4 +15,9 @@ public interface PresenceRepository extends JpaRepository<PresenceEntity, Long> 
     @Query("select p from PresenceEntity p join fetch p.etudiant "
             + "where p.session.id = :sessionId order by p.marqueeAt, p.id")
     List<PresenceEntity> listerParSession(@Param("sessionId") Long sessionId);
+
+    /** EF8/RG4/RG6 : relecteurs éligibles = présents à la session, auteur exclu. */
+    @Query("select p.etudiant.id from PresenceEntity p "
+            + "where p.session.id = :sessionId and p.etudiant.id <> :auteurId")
+    List<Long> presentsHorsAuteur(@Param("sessionId") Long sessionId, @Param("auteurId") Long auteurId);
 }

@@ -10,6 +10,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.kfokam48.kfokam48.exercice.AucunRelecteurDisponibleException;
+import com.kfokam48.kfokam48.exercice.ExerciceDejaDeposeException;
+import com.kfokam48.kfokam48.exercice.ExerciceInconnuException;
+import com.kfokam48.kfokam48.exercice.LienInvalideException;
+import com.kfokam48.kfokam48.exercice.NonAuteurException;
+import com.kfokam48.kfokam48.exercice.RelectureDejaCommenceeException;
 import com.kfokam48.kfokam48.session.CodeExpireException;
 import com.kfokam48.kfokam48.session.CodeInconnuException;
 import com.kfokam48.kfokam48.session.DejaPresentException;
@@ -110,6 +116,48 @@ public class GestionErreursAdvice {
     public ResponseEntity<CorpsErreur> dejaPresent(DejaPresentException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new CorpsErreur("DEJA_PRESENT", exception.getMessage()));
+    }
+
+    /** Lien absent de sens ou non http(s) → 400 LIEN_INVALIDE (EF6/EF7). */
+    @ExceptionHandler(LienInvalideException.class)
+    public ResponseEntity<CorpsErreur> lienInvalide(LienInvalideException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CorpsErreur("LIEN_INVALIDE", exception.getMessage()));
+    }
+
+    /** Remplacement demandé par un autre que l'auteur → 403 NON_AUTEUR (EF7, section 7). */
+    @ExceptionHandler(NonAuteurException.class)
+    public ResponseEntity<CorpsErreur> nonAuteur(NonAuteurException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new CorpsErreur("NON_AUTEUR", exception.getMessage()));
+    }
+
+    /** Identifiant d'exercice inexistant → 404 EXERCICE_INCONNU (EF7). */
+    @ExceptionHandler(ExerciceInconnuException.class)
+    public ResponseEntity<CorpsErreur> exerciceInconnu(ExerciceInconnuException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new CorpsErreur("EXERCICE_INCONNU", exception.getMessage()));
+    }
+
+    /** Deuxième POST pour la même session → 409 EXERCICE_DEJA_DEPOSE (utiliser PUT, section 7). */
+    @ExceptionHandler(ExerciceDejaDeposeException.class)
+    public ResponseEntity<CorpsErreur> exerciceDejaDepose(ExerciceDejaDeposeException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CorpsErreur("EXERCICE_DEJA_DEPOSE", exception.getMessage()));
+    }
+
+    /** Relecture déjà rendue → 409 RELECTURE_DEJA_COMMENCEE (EF7, RG12). */
+    @ExceptionHandler(RelectureDejaCommenceeException.class)
+    public ResponseEntity<CorpsErreur> relectureDejaCommencee(RelectureDejaCommenceeException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CorpsErreur("RELECTURE_DEJA_COMMENCEE", exception.getMessage()));
+    }
+
+    /** Aucun présent autre que l'auteur → 422 AUCUN_RELECTEUR_DISPONIBLE (EF8, section 7). */
+    @ExceptionHandler(AucunRelecteurDisponibleException.class)
+    public ResponseEntity<CorpsErreur> aucunRelecteur(AucunRelecteurDisponibleException exception) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
+                .body(new CorpsErreur("AUCUN_RELECTEUR_DISPONIBLE", exception.getMessage()));
     }
 
     /** Filet : toute erreur non prévue reste au format { code, message }. */

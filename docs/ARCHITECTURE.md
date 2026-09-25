@@ -42,18 +42,20 @@ Paquetages **par domaine** puis techniques — un ticket EFx ne touche qu'un paq
 com.kfokam48.kfokam48
 ├── api/         GestionErreursAdvice (transverse)
 ├── conf/        Clock, OpenAPI (transverse)
-└── session/     SessionController, SessionService, entités, repos, DTO, exceptions
+├── session/     sessions, étudiants, présences : contrôleurs, services, entités, repos, exceptions
+├── exercice/    dépôt et remplacement du lien, tirage du relecteur (EF6–EF8)
+└── relecture/   entité et repository de la relecture (rendu EF9 à venir)
 ```
 
-Les domaines suivants suivront la même logique : `presence/`, `exercice/`, `relecture/`,
-`tableau/`.
+Les présences sont restées dans `session/` (fortement liées au code de session). Le
+domaine suivant, `tableau/`, suivra la même logique.
 
 ### Base de données
 
 - Identifiants **`BIGINT IDENTITY`** générés par la base (alignés sur le contrat int64,
   jamais d'UUID applicatif — cf. D2).
 - **Flyway versionné** : V1 promotion + session_cours, V2 promotion de démonstration,
-  V3 etudiant + presence, V4 index de l'auto-clôture. Une migration par ticket,
+  V3 etudiant + presence, V4 index de l'auto-clôture, V5 exercice + relecture. Une migration par ticket,
   l'historique raconte les stories.
 
 ### Tâches planifiées

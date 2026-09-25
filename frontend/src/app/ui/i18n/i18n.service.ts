@@ -18,6 +18,14 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'etudiant.etiquette-code': 'Code de présence',
     'etudiant.placeholder': 'Ex. JQP4AP',
     'etudiant.action': 'Valider ma présence',
+    'etudiant.succes': 'Présence enregistrée. Bonne session !',
+    'erreur.CODE_INCONNU': 'Ce code ne correspond à aucune session. Vérifiez la saisie.',
+    'erreur.CODE_EXPIRE': 'Ce code a expiré : la fenêtre de 15 minutes est passée.',
+    'erreur.DEJA_PRESENT': 'Vous êtes déjà marqué présent à cette session.',
+    'erreur.SESSION_CLOTUREE': 'La session est clôturée : il n est plus possible de pointer.',
+    'erreur.ETUDIANT_INCONNU': 'Étudiant inconnu.',
+    'erreur.RESEAU_INJOIGNABLE': 'Impossible de joindre le serveur. Vérifiez votre connexion.',
+    'erreur.defaut': 'Une erreur inattendue est survenue.',
     'etudiant.en-attente': "Dépôt d'exercice et relectures arrivent avec les prochains tickets.",
 
     'relecteur.kicker': 'Espace relecteur',
@@ -31,6 +39,13 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'formateur.tagline':
       'Créez la session, partagez le code à 6 caractères, puis suivez les présences et les relectures en direct.',
     'formateur.en-attente': 'Création de session (EF1) et tableau de suivi (EF16) arrivent ici.',
+    'formateur.etiquette-titre': 'Titre de la session',
+    'formateur.placeholder-titre': 'Ex. Algorithmique — séance 1',
+    'formateur.action': 'Ouvrir la session',
+    'formateur.session-ouverte': 'Session ouverte',
+    'formateur.code-a-partager': 'Projetez ce code aux étudiants — ils le saisissent pour pointer.',
+    'formateur.expire-dans': 'Le code expire dans',
+    'formateur.minutes': 'min',
   },
   en: {
     'app.titre': 'KFOKAM48 — Attendance & Peer Review',
@@ -46,6 +61,14 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'etudiant.etiquette-code': 'Attendance code',
     'etudiant.placeholder': 'e.g. JQP4AP',
     'etudiant.action': 'Check in',
+    'etudiant.succes': 'Attendance recorded. Enjoy your session!',
+    'erreur.CODE_INCONNU': 'This code matches no session. Please double-check.',
+    'erreur.CODE_EXPIRE': 'This code has expired: the 15-minute window has passed.',
+    'erreur.DEJA_PRESENT': 'You are already checked in to this session.',
+    'erreur.SESSION_CLOTUREE': 'The session is closed: check-in is no longer possible.',
+    'erreur.ETUDIANT_INCONNU': 'Unknown student.',
+    'erreur.RESEAU_INJOIGNABLE': 'Cannot reach the server. Check your connection.',
+    'erreur.defaut': 'An unexpected error occurred.',
     'etudiant.en-attente': 'Exercise submission and peer reviews arrive with upcoming tickets.',
 
     'relecteur.kicker': 'Reviewer area',
@@ -59,6 +82,13 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'formateur.tagline':
       'Create the session, share the 6-character code, then track attendance and reviews live.',
     'formateur.en-attente': 'Session creation (EF1) and tracking dashboard (EF16) land here.',
+    'formateur.etiquette-titre': 'Session title',
+    'formateur.placeholder-titre': 'e.g. Algorithms — session 1',
+    'formateur.action': 'Open the session',
+    'formateur.session-ouverte': 'Session is open',
+    'formateur.code-a-partager': 'Project this code — students type it to check in.',
+    'formateur.expire-dans': 'Code expires in',
+    'formateur.minutes': 'min',
   },
 };
 
