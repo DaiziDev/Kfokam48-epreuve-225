@@ -1,6 +1,6 @@
-<div class="flex min-h-dvh flex-col bg-slate-50">
+<div class="flex min-h-dvh flex-col bg-slate-50 dark:bg-slate-950">
   <header class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div class="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
+    <div class="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
       <div class="flex items-center gap-2">
         <ui-icon name="graduation-cap" class="text-xl text-brand-600 dark:text-brand-400" />
         <span class="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50">
@@ -34,28 +34,29 @@
     </div>
   </header>
 
+  <!-- Navigation : onglets pleine largeur sur mobile, pilules centrées sur desktop -->
   <nav class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div class="mx-auto flex max-w-3xl">
+    <div class="mx-auto flex max-w-5xl items-center px-4 sm:justify-center sm:gap-2 sm:py-3">
       <a
         routerLink="/etudiant"
-        routerLinkActive="border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300"
-        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        routerLinkActive="border-brand-600 text-brand-700 sm:bg-brand-50 sm:border-brand-200 dark:sm:bg-slate-800 dark:sm:border-slate-700 dark:text-brand-300"
+        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 sm:flex-none sm:rounded-full sm:border-2 sm:px-6 sm:py-2 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ui-icon name="scan-line" class="text-base" />
         {{ 'nav.etudiant' | t }}
       </a>
       <a
         routerLink="/relecteur"
-        routerLinkActive="border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300"
-        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        routerLinkActive="border-brand-600 text-brand-700 sm:bg-brand-50 sm:border-brand-200 dark:sm:bg-slate-800 dark:sm:border-slate-700 dark:text-brand-300"
+        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 sm:flex-none sm:rounded-full sm:border-2 sm:px-6 sm:py-2 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ui-icon name="clipboard-check" class="text-base" />
         {{ 'nav.relecteur' | t }}
       </a>
       <a
         routerLink="/formateur"
-        routerLinkActive="border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300"
-        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        routerLinkActive="border-brand-600 text-brand-700 sm:bg-brand-50 sm:border-brand-200 dark:sm:bg-slate-800 dark:sm:border-slate-700 dark:text-brand-300"
+        class="flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-3 py-3 text-sm font-medium text-slate-500 hover:text-slate-900 sm:flex-none sm:rounded-full sm:border-2 sm:px-6 sm:py-2 dark:text-slate-400 dark:hover:text-slate-100"
       >
         <ui-icon name="table-2" class="text-base" />
         {{ 'nav.formateur' | t }}
@@ -63,9 +64,8 @@
     </div>
   </nav>
 
-  <main class="flex-1 px-4 py-8">
-    <div class="mx-auto max-w-md">
-      <router-outlet />
-    </div>
+  <!-- Chaque écran gère son propre conteneur : l'accueil occupe toute la largeur -->
+  <main class="flex-1">
+    <router-outlet />
   </main>
 </div>

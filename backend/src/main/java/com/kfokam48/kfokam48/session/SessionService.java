@@ -99,6 +99,18 @@ public class SessionService {
         return sessions.cloturerExpireesAvant(limite, SessionStatut.OUVERTE, SessionStatut.CLOTUREE);
     }
 
+    /** Sessions d'une promotion, la plus récente d'abord (404 si la promotion n'existe pas). */
+    @Transactional(readOnly = true)
+    public java.util.List<SessionResume> listerParPromotion(Long promotionId) {
+        if (!promotions.existsById(promotionId)) {
+            throw new PromotionInconnueException(promotionId);
+        }
+        return sessions.findByPromotionIdOrderByOuvertureAtDescIdDesc(promotionId).stream()
+                .map(s -> new SessionResume(s.getId(), s.getTitre(), s.getCode(), s.getOuvertureAt(),
+                        s.getExpirationAt(), s.getStatut()))
+                .toList();
+    }
+
     private SessionEntity trouver(Long sessionId) {
         return sessions.findById(sessionId)
                 .orElseThrow(() -> new SessionInconnueException(sessionId));
@@ -132,5 +144,9 @@ public class SessionService {
     }
 
     public record SessionStatutChange(Long id, SessionStatut statut) {
+    }
+
+    public record SessionResume(Long id, String titre, String code, Instant ouvertureAt, Instant expirationAt,
+            SessionStatut statut) {
     }
 }

@@ -1,0 +1,110 @@
+<section class="card p-5 sm:p-6" aria-live="polite">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <p class="kicker">{{ 'formateur.detail-kicker' | t }}</p>
+      <h2 class="mt-1 break-words text-lg font-semibold text-slate-900 dark:text-slate-50">{{ session().titre }}</h2>
+    </div>
+    @if (estOuverte()) {
+      <ui-badge-statut [label]="'statut.OUVERTE' | t" variante="success" icone="lock-open" />
+    } @else {
+      <ui-badge-statut [label]="'statut.CLOTUREE' | t" variante="neutral" icone="lock" />
+    }
+  </div>
+
+  <!-- Code de présence : élément héros tant qu'il est valide (RG1) -->
+  <div
+    class="mt-5 rounded-card border-2 p-5 text-center sm:p-8"
+    [class]="codeExpire()
+      ? 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800'
+      : 'border-brand-200 bg-brand-50 dark:border-brand-800 dark:bg-brand-950'"
+  >
+    <p
+      class="font-mono text-4xl font-bold tracking-[0.25em] sm:text-6xl"
+      [class]="codeExpire() ? 'text-slate-400 line-through dark:text-slate-500' : 'text-brand-700 dark:text-brand-300'"
+      data-test="code"
+    >{{ session().code }}</p>
+    <p class="mt-3 text-sm" [class]="codeExpire() ? 'text-slate-500 dark:text-slate-400' : 'text-brand-600 dark:text-brand-300'">
+      @if (codeExpire()) {
+        {{ 'formateur.code-expire' | t }}
+      } @else {
+        {{ 'formateur.expire-dans' | t }} <span class="font-semibold">{{ minutesRestantes() }}</span> {{ 'formateur.minutes' | t }}
+      }
+    </p>
+  </div>
+
+  <!-- EF13 / EF15 : clôture et réouverture -->
+  <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      {{ (estOuverte() ? 'formateur.aide-cloture' : 'formateur.aide-reouverture') | t }}
+    </p>
+    <button type="button" class="btn-secondary shrink-0" [disabled]="enCours()" (click)="basculerStatut()" data-test="basculer-statut">
+      <ui-icon [name]="estOuverte() ? 'lock' : 'lock-open'" class="text-base" />
+      {{ (estOuverte() ? 'formateur.cloturer' : 'formateur.rouvrir') | t }}
+    </button>
+  </div>
+
+  @if (erreur()) {
+    <p class="mt-4 flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-3 text-sm text-danger" role="alert">
+      <ui-icon name="alert" class="mt-0.5 text-base" />
+      {{ erreur() | erreurApi }}
+    </p>
+  }
+
+  <!-- EF5 : présents, la source distingue les ajouts du formateur (RG13) -->
+  <div class="mt-6 border-t border-slate-200 pt-5 dark:border-slate-800">
+    <div class="flex items-center justify-between gap-2">
+      <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        {{ 'formateur.presents' | t }} <span class="text-slate-500 dark:text-slate-400">({{ presences().length }})</span>
+      </h3>
+      <button type="button" class="btn-secondary !px-2.5 !py-1.5" (click)="chargerPresences()" [attr.aria-label]="'commun.actualiser' | t">
+        <ui-icon name="refresh-cw" class="text-sm" />
+      </button>
+    </div>
+
+    @if (presences().length === 0) {
+      <p class="note mt-3">
+        <ui-icon name="hourglass" class="mt-0.5 text-base" />
+        {{ 'formateur.aucun-present' | t }}
+      </p>
+    } @else {
+      <ul class="mt-3 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800" data-test="presents">
+        @for (presence of presences(); track presence.id) {
+          <li class="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+            <span class="min-w-0 break-words text-sm font-medium text-slate-800 dark:text-slate-100">{{ presence.nom }}</span>
+            @if (presence.source === 'FORMATEUR') {
+              <ui-badge-statut [label]="'source.FORMATEUR' | t" variante="brand" icone="user-plus" />
+            } @else {
+              <ui-badge-statut [label]="'source.ETUDIANT' | t" variante="success" icone="scan-line" />
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (estOuverte()) {
+      <div class="mt-4">
+        <label for="ajout-presence" class="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
+          {{ 'formateur.ajout-manuel' | t }}
+        </label>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <select
+            id="ajout-presence"
+            class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            [value]="etudiantChoisi() ?? ''"
+            (change)="surChoixEtudiant($any($event.target).value)"
+          >
+            <option value="">{{ 'formateur.choisir-etudiant' | t }}</option>
+            @for (etudiant of absents(); track etudiant.id) {
+              <option [value]="etudiant.id">{{ etudiant.nom }}</option>
+            }
+          </select>
+          <button type="button" class="btn-primary shrink-0" [disabled]="etudiantChoisi() === null || enCours()" (click)="ajouterPresence()" data-test="ajouter-presence">
+            <ui-icon name="user-plus" class="text-base" />
+            {{ 'formateur.ajouter' | t }}
+          </button>
+        </div>
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ 'formateur.aide-ajout' | t }}</p>
+      </div>
+    }
+  </div>
+</section>

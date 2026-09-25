@@ -80,7 +80,10 @@ src/app
 │   │   ├── erreur-api.ts         ApiError { code, message } = format du contrat
 │   │   ├── intercepteur-erreurs.ts  toute erreur → ApiError, une seule forme
 │   │   └── sessions/…            un service par ressource du contrat
-│   ├── sessions/sessions-api.service.ts
+│   ├── api/promotion.ts      PROMOTION_COURANTE (promotion de démo, un seul endroit)
+│   ├── sessions/ presences/ exercices/ relectures/ tableau/ etudiants/
+│   │                         un service par ressource — testés contre le contrat (services-api.spec.ts)
+│   ├── identite/            « qui suis-je » : choisi dans une liste (auth hors périmètre, Q1)
 │   └── types/               types TS miroir de api/contrat.yml
 ├── features/                un dossier par écran, lazy loading
 │   ├── etudiant/            (EF2–EF8, EF12 : code, dépôt, consultation)

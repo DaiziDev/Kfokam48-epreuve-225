@@ -28,7 +28,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     },
   ],
   template: `
-    <div role="group" [attr.aria-label]="etiquette()" class="flex gap-2">
+    <!-- Cases souples : 6 cases tiennent dans une carte à 375px (ENF1), 48px max au-delà -->
+    <div role="group" [attr.aria-label]="etiquette()" class="flex gap-1.5 sm:gap-2">
       @for (valeur of cases(); track $index) {
         <input
           #caseInput
@@ -37,7 +38,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
           autocomplete="one-time-code"
           maxlength="6"
           aria-label="Caractère {{ $index + 1 }} du code"
-          class="h-14 w-11 rounded-lg border border-slate-300 bg-white text-center font-mono
+          class="h-14 w-full min-w-0 max-w-12 flex-1 rounded-lg border border-slate-300 bg-white text-center font-mono
                  text-xl font-semibold uppercase text-slate-900 shadow-card transition-colors
                  focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200
                  disabled:bg-slate-100 disabled:text-slate-400"

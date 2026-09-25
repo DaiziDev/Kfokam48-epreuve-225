@@ -3,6 +3,8 @@ package com.kfokam48.kfokam48.api;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -41,6 +43,8 @@ import com.kfokam48.kfokam48.session.SessionInconnueException;
  */
 @RestControllerAdvice
 public class GestionErreursAdvice {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GestionErreursAdvice.class);
 
     public record CorpsErreur(String code, String message) {
     }
@@ -224,9 +228,14 @@ public class GestionErreursAdvice {
                 .body(new CorpsErreur("AUCUN_RELECTEUR_DISPONIBLE", exception.getMessage()));
     }
 
-    /** Filet : toute erreur non prévue reste au format { code, message }. */
+    /**
+     * Filet : toute erreur non prévue reste au format { code, message } côté
+     * client — mais la cause est journalisée côté serveur, sinon un 500 est
+     * impossible à diagnostiquer.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<CorpsErreur> inattendue(Exception exception) {
+        LOG.error("Erreur non prévue, renvoyée en 500 ERREUR_INTERNE", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new CorpsErreur("ERREUR_INTERNE", "Une erreur interne est survenue."));
     }
