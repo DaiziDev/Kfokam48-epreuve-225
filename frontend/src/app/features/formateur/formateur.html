@@ -6,14 +6,14 @@
 
     <div class="mt-6 space-y-4">
       <div>
-        <label for="titre" class="mb-2 block text-sm font-medium text-slate-700">
+        <label for="titre" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
           {{ 'formateur.etiquette-titre' | t }}
         </label>
         <input
           id="titre"
           type="text"
           name="titre"
-          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          class="w-full rounded-lg border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
           [ngModel]="titre"
           (ngModelChange)="titre = $event"
           [placeholder]="'formateur.placeholder-titre' | t"
