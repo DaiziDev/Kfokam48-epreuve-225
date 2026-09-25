@@ -18,8 +18,7 @@ rectangle "Système KFOKAM48" {
     usecase "Effectuer une relecture assignée" as UC9
     usecase "Consulter sa note et son commentaire" as UC10
 
-    usecase "Assigner un relecteur au hasard" as UC11
-    usecase "Clôturer automatiquement après 24h" as UC12
+    usecase "Assigner deux relecteurs distincts au hasard" as UC11
 }
 
 Formateur --> UC1
@@ -35,5 +34,4 @@ Formateur --> UC5
 Étudiant --> UC10
 
 Système --> UC11
-Système --> UC12
 @enduml

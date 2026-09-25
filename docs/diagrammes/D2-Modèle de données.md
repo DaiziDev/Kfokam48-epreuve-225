@@ -7,7 +7,7 @@ erDiagram
     SESSION ||--o{ EXERCICE : recoit
     ETUDIANT ||--o{ PRESENCE : marque
     ETUDIANT ||--o{ EXERCICE : depose
-    EXERCICE ||--o| RELECTURE : "a au plus une"
+    EXERCICE ||--o{ RELECTURE : "2 nouvelles, 1 possible héritée"
     ETUDIANT ||--o{ RELECTURE : effectue
 
     PROMOTION {
@@ -50,7 +50,7 @@ erDiagram
 
     RELECTURE {
         bigint id PK "BIGSERIAL"
-        bigint exerciceId FK "unique (RG5)"
+        bigint exerciceId FK "unique avec relecteurId"
         bigint relecteurId FK
         int note "0 à 20, entier, nul tant que non rendue"
         string commentaire "nul tant que non rendue"
@@ -58,11 +58,12 @@ erDiagram
     }
 ```
 
-> Mis à jour pendant EF6/EF8 : la relecture est créée **au dépôt** (assignation, EF8),
-> d'où note, commentaire et `rendueAt` nuls jusqu'au rendu. Le booléen `verrouillee`
-> initialement prévu est retiré : avec RG9, une relecture est verrouillée dès qu'elle
-> est rendue, donc `rendueAt non nul` porte déjà l'information — un second champ
-> pourrait diverger.
+> Décision du ticket #23 : chaque nouveau dépôt crée deux lignes `RELECTURE`, assignées à deux étudiants
+> présents différents. La contrainte unique porte sur le couple (`exerciceId`, `relecteurId`), et non
+> sur le seul exercice. Chaque ligne garde sa note et son commentaire ; `rendueAt` verrouille ce rendu.
+> La migration conserve les lignes historiques et ajoute une seconde affectation lorsqu'un pair
+> présent éligible existe. Un exercice historique sans second candidat reste consultable avec sa note
+> éventuellement provisoire.
 
 ## Identifiants : `bigint` auto-incrément, pas d'UUID
 
