@@ -56,6 +56,9 @@ import { UiIcon } from '../../ui/icon/ui-icon';
                   <span class="text-slate-400">—</span>
                 } @else {
                   {{ ligne.moyenne | number: '1.0-2' }}<span class="text-slate-400">/20</span>
+                  @if (ligne.moyenneProvisoire) {
+                    <span class="ml-1 text-xs text-amber-700 dark:text-amber-300">({{ 'tableau.provisoire' | t }})</span>
+                  }
                 }
               </dd>
               <dt class="text-slate-500 dark:text-slate-400">{{ 'tableau.en-attente' | t }}</dt>
@@ -89,6 +92,9 @@ import { UiIcon } from '../../ui/icon/ui-icon';
                       <span class="text-slate-400" [attr.aria-label]="'tableau.sans-note' | t">—</span>
                     } @else {
                       {{ ligne.moyenne | number: '1.0-2' }}<span class="text-slate-400">/20</span>
+                      @if (ligne.moyenneProvisoire) {
+                        <span class="ml-1 text-xs text-amber-700 dark:text-amber-300">({{ 'tableau.provisoire' | t }})</span>
+                      }
                     }
                   </td>
                   <td class="py-2.5 pl-3 text-right tabular-nums" [class.text-warning]="ligne.relecturesEnAttente > 0" [class.font-semibold]="ligne.relecturesEnAttente > 0">

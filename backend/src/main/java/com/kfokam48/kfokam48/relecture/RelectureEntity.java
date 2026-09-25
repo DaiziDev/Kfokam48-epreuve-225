@@ -13,28 +13,42 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 /**
- * Relecture assignée au dépôt (EF8). Note, commentaire et rendueAt restent nuls
- * jusqu'au rendu (EF9) ; une relecture rendue est définitive (RG9).
+ * Relecture assignée au dépôt — deux par exercice depuis l'exigence révisée
+ * (ticket #23), distinctes par le rang : 1 = première, 2 = seconde. Note,
+ * commentaire et rendueAt restent nuls jusqu'au rendu (EF9) ; une relecture
+ * rendue est définitive (RG9). Un même relecteur ne relit qu'une fois le même
+ * exercice (uq_relecture_exercice_relecteur).
  */
 @Entity
-@Table(name = "relecture")
+@Table(name = "relecture", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_relecture_exercice_relecteur", columnNames = { "exercice_id", "relecteur_id" }),
+        @UniqueConstraint(name = "uq_relecture_exercice_rang", columnNames = { "exercice_id", "rang" }) })
 public class RelectureEntity {
+
+    /** Première relecture de l'exercice (celle de l'ancien modèle, préservée). */
+    public static final int PREMIERE = 1;
+    /** Seconde relecture de l'exercice (ajoutée par l'exigence révisée). */
+    public static final int SECONDE = 2;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "exercice_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "exercice_id", nullable = false)
     private ExerciceEntity exercice;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "relecteur_id", nullable = false)
     private EtudiantEntity relecteur;
+
+    /** Position de la relecture sur l'exercice : 1 (première) ou 2 (seconde). */
+    @Column(nullable = false)
+    private int rang;
 
     private Integer note;
 
@@ -62,6 +76,14 @@ public class RelectureEntity {
 
     public void setRelecteur(EtudiantEntity relecteur) {
         this.relecteur = relecteur;
+    }
+
+    public int getRang() {
+        return rang;
+    }
+
+    public void setRang(int rang) {
+        this.rang = rang;
     }
 
     public Integer getNote() {

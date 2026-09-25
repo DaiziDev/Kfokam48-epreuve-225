@@ -10,12 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kfokam48.kfokam48.exercice.ExerciceEntity;
 import com.kfokam48.kfokam48.exercice.ExerciceStatut;
+import com.kfokam48.kfokam48.exercice.ExerciceRepository;
 import com.kfokam48.kfokam48.session.EtudiantInconnuException;
 import com.kfokam48.kfokam48.session.EtudiantRepository;
 
 /**
- * EF9 : le relecteur assigné rend note et commentaire, l'exercice passe à RELU.
- * EF10/RG4 : jamais sur son propre exercice. EF11/RG9 : un seul rendu, définitif.
+ * EF9 : le relecteur assigné rend note et commentaire ; l'exercice passe à RELU
+ * quand ses deux relectures sont rendues (exigence révisée) — après un seul
+ * rendu, la note exposée reste provisoire. Le lien reste remplaçable tant que
+ * l'exercice n'est pas RELU (RG12, lecture tranchée avec l'équipe). EF10/RG4 :
+ * jamais sur son propre exercice. EF11/RG9 : un seul rendu par relecture,
+ * définitif.
  */
 @Service
 public class RelectureService {
@@ -25,11 +30,14 @@ public class RelectureService {
     private static final int LONGUEUR_MAX_COMMENTAIRE = 4000;
 
     private final RelectureRepository relectures;
+    private final ExerciceRepository exercices;
     private final EtudiantRepository etudiants;
     private final Clock horloge;
 
-    public RelectureService(RelectureRepository relectures, EtudiantRepository etudiants, Clock horloge) {
+    public RelectureService(RelectureRepository relectures, ExerciceRepository exercices,
+            EtudiantRepository etudiants, Clock horloge) {
         this.relectures = relectures;
+        this.exercices = exercices;
         this.etudiants = etudiants;
         this.horloge = horloge;
     }
@@ -44,9 +52,12 @@ public class RelectureService {
         }
 
         // 2. La relecture existe (404) — verrouillée jusqu'à la fin de la transaction
+        RelectureEntity reference = relectures.findById(relectureId)
+                .orElseThrow(() -> new RelectureInconnueException(relectureId));
+        ExerciceEntity exercice = exercices.verrouillerParId(reference.getExercice().getId())
+                .orElseThrow(() -> new RelectureInconnueException(relectureId));
         RelectureEntity relecture = relectures.verrouillerParId(relectureId)
                 .orElseThrow(() -> new RelectureInconnueException(relectureId));
-        ExerciceEntity exercice = relecture.getExercice();
 
         // 3. Jamais sur son propre exercice (403, EF10/RG4)
         if (exercice.getAuteur().getId().equals(relecteurId)) {
@@ -63,12 +74,19 @@ public class RelectureService {
             throw new RelectureDejaRendueException();
         }
 
-        // 6. Cas nominal : note verrouillée, exercice RELU (EF9)
+        // Compte avant la modification : le premier rendu reste provisoire.
+        long renduesAvant = relectures.countByExerciceIdAndRendueAtIsNotNull(exercice.getId());
+        long nombreAssignees = relectures.countByExerciceId(exercice.getId());
+
+        // 6. La note est verrouillée (RG9) ; l'exercice passe à RELU quand ses
+        //    deux relectures sont rendues — après un seul rendu, la note exposée
+        //    reste provisoire (exigence révisée).
         Instant maintenant = horloge.instant();
         relecture.setNote(note);
         relecture.setCommentaire(commentaire);
         relecture.setRendueAt(maintenant);
-        exercice.setStatut(ExerciceStatut.RELU);
+        exercice.setStatut(renduesAvant + 1 >= nombreAssignees
+                ? ExerciceStatut.RELU : ExerciceStatut.EN_ATTENTE_RELECTURE);
 
         return new RelectureRendue(relecture.getId(), exercice.getId(), note, commentaire, maintenant);
     }

@@ -7,7 +7,10 @@
     <app-selecteur-identite class="mt-6 block" />
 
     <div class="mt-6">
-      <label for="code-presence" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+      <label
+        for="code-presence"
+        class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200"
+      >
         {{ 'etudiant.etiquette-code' | t }}
       </label>
       <ui-code-input
@@ -25,24 +28,34 @@
       (click)="valider()"
     >
       @if (chargement()) {
-        <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+        <span
+          class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+        ></span>
       }
       {{ 'etudiant.action' | t }}
     </button>
 
     @if (identite.etudiantId() === null) {
-      <p class="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">{{ 'identite.requise' | t }}</p>
+      <p class="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
+        {{ 'identite.requise' | t }}
+      </p>
     }
 
     @if (erreur()) {
-      <p class="mt-4 flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-4 text-sm text-danger" role="alert">
+      <p
+        class="mt-4 flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-4 text-sm text-danger"
+        role="alert"
+      >
         <ui-icon name="alert" class="mt-0.5 text-base" />
         {{ erreur() | erreurApi }}
       </p>
     }
 
     @if (succes()) {
-      <p class="mt-4 flex items-start gap-2 rounded-lg border border-success-border bg-success-soft p-4 text-sm text-success" role="status">
+      <p
+        class="mt-4 flex items-start gap-2 rounded-lg border border-success-border bg-success-soft p-4 text-sm text-success"
+        role="status"
+      >
         <ui-icon name="check-circle-2" class="mt-0.5 text-base" />
         {{ 'etudiant.succes' | t }}
       </p>
@@ -52,7 +65,9 @@
   @if (identite.etudiantId() !== null) {
     <section class="card mt-5 p-6 sm:p-8">
       <p class="kicker">{{ 'etudiant.exercices-kicker' | t }}</p>
-      <h2 class="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-50">{{ 'etudiant.exercices-titre' | t }}</h2>
+      <h2 class="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-50">
+        {{ 'etudiant.exercices-titre' | t }}
+      </h2>
       <p class="tagline">{{ 'etudiant.exercices-aide' | t }}</p>
 
       @if (chargementExercices()) {
@@ -60,14 +75,20 @@
       }
 
       @if (erreurExercices()) {
-        <p class="mt-4 flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-4 text-sm text-danger" role="alert">
+        <p
+          class="mt-4 flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-4 text-sm text-danger"
+          role="alert"
+        >
           <ui-icon name="alert" class="mt-0.5 text-base" />
           {{ erreurExercices() | erreurApi }}
         </p>
       }
 
       @if (succesDepot()) {
-        <p class="mt-4 flex items-start gap-2 rounded-lg border border-success-border bg-success-soft p-4 text-sm text-success" role="status">
+        <p
+          class="mt-4 flex items-start gap-2 rounded-lg border border-success-border bg-success-soft p-4 text-sm text-success"
+          role="status"
+        >
           <ui-icon name="check-circle-2" class="mt-0.5 text-base" />
           {{ 'etudiant.exercice-enregistre' | t }}
         </p>
@@ -78,7 +99,10 @@
       } @else if (sessionsEligibles().length > 0) {
         <div class="mt-5 space-y-4">
           <div>
-            <label for="session-exercice" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+            <label
+              for="session-exercice"
+              class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200"
+            >
               {{ 'etudiant.session-exercice' | t }}
             </label>
             <select
@@ -97,7 +121,10 @@
             <p class="note">{{ 'etudiant.exercice-deja-relu' | t }}</p>
           } @else {
             <div>
-              <label for="lien-exercice" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+              <label
+                for="lien-exercice"
+                class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200"
+              >
                 {{ 'etudiant.lien-exercice' | t }}
               </label>
               <input
@@ -110,13 +137,23 @@
                 [placeholder]="'etudiant.exercice-placeholder' | t"
               />
             </div>
-            <button type="button" class="btn-primary w-full" [disabled]="depotEnCours() || !lienExercice.trim()" (click)="deposerExercice()">
+            <button
+              type="button"
+              class="btn-primary w-full"
+              [disabled]="depotEnCours() || !lienExercice.trim()"
+              (click)="deposerExercice()"
+            >
               @if (depotEnCours()) {
-                <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+                <span
+                  class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                ></span>
               } @else {
                 <ui-icon name="send" class="text-base" />
               }
-              {{ (exerciceSelectionne() ? 'etudiant.remplacer-lien' : 'etudiant.deposer-exercice') | t }}
+              {{
+                (exerciceSelectionne() ? 'etudiant.remplacer-lien' : 'etudiant.deposer-exercice')
+                  | t
+              }}
             </button>
           }
         </div>
@@ -124,12 +161,44 @@
 
       @if (mesExercices().length > 0) {
         <div class="mt-6 border-t border-slate-200 pt-5 dark:border-slate-800">
-          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ 'etudiant.mes-exercices' | t }}</h3>
-          <ul class="mt-3 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {{ 'etudiant.mes-exercices' | t }}
+          </h3>
+          <ul
+            class="mt-3 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800"
+          >
             @for (exercice of mesExercices(); track exercice.id) {
               <li class="flex flex-wrap items-center justify-between gap-2 px-3 py-3">
-                <span class="min-w-0 break-words text-sm font-medium text-slate-800 dark:text-slate-100">{{ exercice.sessionTitre }}</span>
-                <span class="text-sm text-slate-500 dark:text-slate-400">{{ ('exercice.' + exercice.statut) | t }}</span>
+                <span
+                  class="min-w-0 wrap-break-word text-sm font-medium text-slate-800 dark:text-slate-100"
+                  >{{ exercice.sessionTitre }}</span
+                >
+                <span class="text-sm text-slate-500 dark:text-slate-400">{{
+                  'exercice.' + exercice.statut | t
+                }}</span>
+                @if (detailsExercices()[exercice.id]; as detail) {
+                  @if (detail.note !== null) {
+                    <div class="w-full text-sm text-slate-700 dark:text-slate-200">
+                      <span class="font-semibold"
+                        >{{ 'etudiant.note' | t }} : {{ detail.note }}/20</span
+                      >
+                      @if (detail.noteProvisoire) {
+                        <span
+                          class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                          >{{ 'etudiant.note-provisoire' | t }}</span
+                        >
+                      } @else {
+                        <span
+                          class="ml-2 rounded-full bg-success-soft px-2 py-0.5 text-xs text-success"
+                          >{{ 'etudiant.note-finale' | t }}</span
+                        >
+                      }
+                      @for (commentaire of detail.commentaires; track $index) {
+                        <p class="mt-1">{{ commentaire }}</p>
+                      }
+                    </div>
+                  }
+                }
               </li>
             }
           </ul>

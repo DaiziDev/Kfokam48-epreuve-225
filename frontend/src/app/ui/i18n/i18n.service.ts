@@ -24,25 +24,34 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
 
     'accueil.comment-titre': 'Trois étapes, aucune feuille de présence',
     'accueil.etape-1-titre': 'Le formateur ouvre la session',
-    'accueil.etape-1-texte': 'Un code à 6 caractères est généré, valable 15 minutes, projeté en salle.',
+    'accueil.etape-1-texte':
+      'Un code à 6 caractères est généré, valable 15 minutes, projeté en salle.',
     'accueil.etape-2-titre': 'Les étudiants pointent',
-    'accueil.etape-2-texte': 'Chacun saisit le code depuis son téléphone. Les doubles présences sont refusées automatiquement.',
+    'accueil.etape-2-texte':
+      'Chacun saisit le code depuis son téléphone. Les doubles présences sont refusées automatiquement.',
     'accueil.etape-3-titre': 'Les pairs relisent',
-    'accueil.etape-3-texte': 'Chaque exercice déposé reçoit un relecteur au hasard parmi les présents. Note de 0 à 20, définitive.',
+    'accueil.etape-3-texte':
+      'Chaque exercice déposé reçoit un relecteur au hasard parmi les présents. Note de 0 à 20, définitive.',
 
     'accueil.garanties-titre': 'Conçu pour être juste, même quand personne ne regarde',
-    'accueil.garantie-1-titre': 'Relecteur toujours distinct de l\'auteur',
-    'accueil.garantie-1-texte': 'Le système ne peut jamais assigner un exercice à son propre auteur.',
+    'accueil.garantie-1-titre': "Relecteur toujours distinct de l'auteur",
+    'accueil.garantie-1-texte':
+      'Le système ne peut jamais assigner un exercice à son propre auteur.',
     'accueil.garantie-2-titre': 'Anonymat du relecteur',
-    'accueil.garantie-2-texte': 'L étudiant relu voit sa note et son commentaire, jamais le nom du relecteur.',
-    'accueil.garantie-3-titre': 'Note verrouillée dès l\'envoi',
-    'accueil.garantie-3-texte': 'Une relecture rendue est définitive : aucune correction possible ensuite.',
+    'accueil.garantie-2-texte':
+      'L étudiant relu voit sa note et son commentaire, jamais le nom du relecteur.',
+    'accueil.garantie-3-titre': "Note verrouillée dès l'envoi",
+    'accueil.garantie-3-texte':
+      'Une relecture rendue est définitive : aucune correction possible ensuite.',
     'accueil.garantie-4-titre': 'Double présence impossible',
-    'accueil.garantie-4-texte': 'La base de données elle-même refuse deux présences du même étudiant à une session.',
+    'accueil.garantie-4-texte':
+      'La base de données elle-même refuse deux présences du même étudiant à une session.',
     'accueil.garantie-5-titre': 'Clôture automatique après 24 h',
-    'accueil.garantie-5-texte': 'Une session oubliée se clôt seule un jour après l\'expiration du code.',
+    'accueil.garantie-5-texte':
+      "Une session oubliée se clôt seule un jour après l'expiration du code.",
     'accueil.garantie-6-titre': 'Rattrapage par le formateur',
-    'accueil.garantie-6-texte': 'Un étudiant sans réseau au moment du code ? Le formateur ajoute sa présence à la main.',
+    'accueil.garantie-6-texte':
+      'Un étudiant sans réseau au moment du code ? Le formateur ajoute sa présence à la main.',
 
     'accueil.cta-final-texte': 'Formateur ou étudiant, votre session vous attend.',
     'accueil.cta-final-primaire': 'Pointer maintenant',
@@ -68,8 +77,10 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'etudiant.succes': 'Présence enregistrée. Bonne session !',
     'etudiant.exercices-kicker': 'Après le pointage',
     'etudiant.exercices-titre': 'Déposer un exercice',
-    'etudiant.exercices-aide': 'Choisissez une session où vous êtes présent et partagez le lien de votre travail. Un autre étudiant présent sera chargé de la relecture.',
-    'etudiant.aucune-session-depot': 'Aucune session ouverte où vous êtes présent. Pointez d’abord avec le code de la session.',
+    'etudiant.exercices-aide':
+      'Choisissez une session où vous êtes présent et partagez le lien de votre travail. Deux étudiants présents seront chargés de la relecture.',
+    'etudiant.aucune-session-depot':
+      'Aucune session ouverte où vous êtes présent. Pointez d’abord avec le code de la session.',
     'etudiant.session-exercice': 'Session',
     'etudiant.lien-exercice': 'Lien de votre exercice',
     'etudiant.exercice-placeholder': 'https://…',
@@ -77,6 +88,9 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'etudiant.remplacer-lien': 'Remplacer le lien',
     'etudiant.exercice-enregistre': 'Le lien de votre exercice a été enregistré.',
     'etudiant.mes-exercices': 'Mes exercices',
+    'etudiant.note': 'Note',
+    'etudiant.note-provisoire': 'Note provisoire',
+    'etudiant.note-finale': 'Note finale',
     'etudiant.exercice-deja-relu': 'La relecture est terminée : le lien ne peut plus être modifié.',
     'exercice.EN_ATTENTE_RELECTURE': 'En attente de relecture',
     'exercice.RELU': 'Relu',
@@ -101,9 +115,12 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'erreur.LIEN_INVALIDE': 'Le lien doit être une adresse http:// ou https:// complète.',
     'erreur.NON_AUTEUR': 'Seul l’auteur de l’exercice peut en remplacer le lien.',
     'erreur.EXERCICE_INCONNU': 'Cet exercice n’existe pas.',
-    'erreur.EXERCICE_DEJA_DEPOSE': 'Vous avez déjà déposé un exercice pour cette session : remplacez son lien.',
-    'erreur.RELECTURE_DEJA_COMMENCEE': 'La relecture est déjà rendue : le lien ne peut plus être remplacé.',
-    'erreur.AUCUN_RELECTEUR_DISPONIBLE': 'Aucun autre étudiant présent pour relire : réessayez dès qu’un camarade a pointé.',
+    'erreur.EXERCICE_DEJA_DEPOSE':
+      'Vous avez déjà déposé un exercice pour cette session : remplacez son lien.',
+    'erreur.RELECTURE_DEJA_COMMENCEE':
+      'La relecture est déjà rendue : le lien ne peut plus être remplacé.',
+    'erreur.AUCUN_RELECTEUR_DISPONIBLE':
+      'Deux autres étudiants doivent être présents pour relire cet exercice.',
     'erreur.NOTE_INVALIDE': 'La note doit être un nombre entier entre 0 et 20.',
     'erreur.COMMENTAIRE_INVALIDE': 'Le commentaire ne peut pas dépasser 4000 caractères.',
     'erreur.AUTO_RELECTURE': 'Vous ne pouvez pas relire votre propre exercice.',
@@ -113,14 +130,13 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'erreur.ERREUR_INTERNE': 'Le serveur a rencontré une erreur. Réessayez dans un instant.',
     'erreur.RESEAU_INJOIGNABLE': 'Impossible de joindre le serveur. Vérifiez votre connexion.',
     'erreur.defaut': 'Une erreur inattendue est survenue.',
-    'etudiant.en-attente': "Dépôt d'exercice et relectures arrivent avec les prochains tickets.",
 
     'relecteur.kicker': 'Espace relecteur',
     'relecteur.titre': 'Vos relectures assignées',
     'relecteur.tagline':
       "Les exercices qui vous ont été confiés pour relecture, note et commentaire à l'appui.",
-    'relecteur.en-attente': 'Disponible avec les tickets EF9 à EF12.',
-    'relecteur.choisir-identite': 'Choisissez votre identité pour afficher les exercices qui vous sont attribués.',
+    'relecteur.choisir-identite':
+      'Choisissez votre identité pour afficher les exercices qui vous sont attribués.',
     'relecteur.a-faire': 'À relire',
     'relecteur.aucune-en-attente': 'Aucune relecture ne vous attend pour le moment.',
     'relecteur.exercice-a-relire': 'Exercice attribué',
@@ -132,7 +148,8 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'relecteur.commentaire': 'Commentaire',
     'relecteur.commentaire-placeholder': 'Expliquez les points forts et les pistes d’amélioration…',
     'relecteur.envoyer': 'Envoyer la relecture',
-    'relecteur.rendu-definitif': 'Après envoi, la note et le commentaire ne pourront plus être modifiés.',
+    'relecteur.rendu-definitif':
+      'Après envoi, la note et le commentaire ne pourront plus être modifiés.',
     'relecteur.succes': 'Votre relecture a été envoyée.',
     'relecteur.terminees': 'Relectures terminées',
     'relecteur.statut-rendue': 'Envoyée',
@@ -141,7 +158,6 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'formateur.titre': 'Ouvrez une session',
     'formateur.tagline':
       'Créez la session, partagez le code à 6 caractères, puis suivez les présences et les relectures en direct.',
-    'formateur.en-attente': 'Création de session (EF1) et tableau de suivi (EF16) arrivent ici.',
     'formateur.etiquette-titre': 'Titre de la session',
     'formateur.placeholder-titre': 'Ex. Algorithmique — séance 1',
     'formateur.action': 'Ouvrir la session',
@@ -179,6 +195,7 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'tableau.moyenne': 'Moyenne',
     'tableau.en-attente': 'Relectures en attente',
     'tableau.sans-note': 'Aucune note',
+    'tableau.provisoire': 'provisoire',
   },
   en: {
     'app.titre': 'KFOKAM48 — Attendance & Peer Review',
@@ -200,25 +217,31 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
 
     'accueil.comment-titre': 'Three steps, no attendance sheet',
     'accueil.etape-1-titre': 'The instructor opens the session',
-    'accueil.etape-1-texte': 'A 6-character code is generated, valid for 15 minutes, projected in the room.',
+    'accueil.etape-1-texte':
+      'A 6-character code is generated, valid for 15 minutes, projected in the room.',
     'accueil.etape-2-titre': 'Students check in',
-    'accueil.etape-2-texte': 'Each student types the code from their phone. Duplicate check-ins are rejected automatically.',
+    'accueil.etape-2-texte':
+      'Each student types the code from their phone. Duplicate check-ins are rejected automatically.',
     'accueil.etape-3-titre': 'Peers review',
-    'accueil.etape-3-texte': 'Every submitted exercise gets a reviewer drawn at random among attendees. Grade 0-20, final.',
+    'accueil.etape-3-texte':
+      'Every submitted exercise gets a reviewer drawn at random among attendees. Grade 0-20, final.',
 
     'accueil.garanties-titre': 'Designed to be fair, even when nobody is watching',
     'accueil.garantie-1-titre': 'Reviewer never the author',
     'accueil.garantie-1-texte': 'The system can never assign an exercise to its own author.',
     'accueil.garantie-2-titre': 'Reviewer anonymity',
-    'accueil.garantie-2-texte': "The reviewed student sees their grade and comment, never the reviewer's name.",
+    'accueil.garantie-2-texte':
+      "The reviewed student sees their grade and comment, never the reviewer's name.",
     'accueil.garantie-3-titre': 'Grade locked on submission',
     'accueil.garantie-3-texte': 'A submitted review is final: no corrections afterwards.',
     'accueil.garantie-4-titre': 'Duplicate check-in impossible',
-    'accueil.garantie-4-texte': 'The database itself refuses two check-ins from the same student in one session.',
+    'accueil.garantie-4-texte':
+      'The database itself refuses two check-ins from the same student in one session.',
     'accueil.garantie-5-titre': 'Auto-close after 24 h',
     'accueil.garantie-5-texte': 'A forgotten session closes itself one day after the code expires.',
     'accueil.garantie-6-titre': 'Instructor catch-up',
-    'accueil.garantie-6-texte': 'No signal when the code was shown? The instructor adds the attendance by hand.',
+    'accueil.garantie-6-texte':
+      'No signal when the code was shown? The instructor adds the attendance by hand.',
 
     'accueil.cta-final-texte': 'Instructor or student, your session is waiting.',
     'accueil.cta-final-primaire': 'Check in now',
@@ -244,8 +267,10 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'etudiant.succes': 'Attendance recorded. Enjoy your session!',
     'etudiant.exercices-kicker': 'After check-in',
     'etudiant.exercices-titre': 'Submit an exercise',
-    'etudiant.exercices-aide': 'Choose a session you attended and share a link to your work. Another student who checked in will be assigned to review it.',
-    'etudiant.aucune-session-depot': 'There is no open session where you are checked in. Check in with the session code first.',
+    'etudiant.exercices-aide':
+      'Choose a session you attended and share a link to your work. Two students who checked in will be assigned to review it.',
+    'etudiant.aucune-session-depot':
+      'There is no open session where you are checked in. Check in with the session code first.',
     'etudiant.session-exercice': 'Session',
     'etudiant.lien-exercice': 'Exercise link',
     'etudiant.exercice-placeholder': 'https://…',
@@ -253,6 +278,9 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'etudiant.remplacer-lien': 'Replace link',
     'etudiant.exercice-enregistre': 'Your exercise link has been saved.',
     'etudiant.mes-exercices': 'My exercises',
+    'etudiant.note': 'Grade',
+    'etudiant.note-provisoire': 'Provisional grade',
+    'etudiant.note-finale': 'Final grade',
     'etudiant.exercice-deja-relu': 'The review is complete: the link can no longer be changed.',
     'exercice.EN_ATTENTE_RELECTURE': 'Awaiting review',
     'exercice.RELU': 'Reviewed',
@@ -276,9 +304,12 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'erreur.LIEN_INVALIDE': 'The link must be a full http:// or https:// address.',
     'erreur.NON_AUTEUR': 'Only the author can replace the exercise link.',
     'erreur.EXERCICE_INCONNU': 'This exercise does not exist.',
-    'erreur.EXERCICE_DEJA_DEPOSE': 'You already submitted an exercise for this session: replace its link instead.',
-    'erreur.RELECTURE_DEJA_COMMENCEE': 'The review is already submitted: the link can no longer be replaced.',
-    'erreur.AUCUN_RELECTEUR_DISPONIBLE': 'No other student is checked in to review: try again once a classmate checks in.',
+    'erreur.EXERCICE_DEJA_DEPOSE':
+      'You already submitted an exercise for this session: replace its link instead.',
+    'erreur.RELECTURE_DEJA_COMMENCEE':
+      'The review is already submitted: the link can no longer be replaced.',
+    'erreur.AUCUN_RELECTEUR_DISPONIBLE':
+      'Two other students must be checked in to review this exercise.',
     'erreur.NOTE_INVALIDE': 'The grade must be a whole number between 0 and 20.',
     'erreur.COMMENTAIRE_INVALIDE': 'The comment cannot exceed 4000 characters.',
     'erreur.AUTO_RELECTURE': 'You cannot review your own exercise.',
@@ -288,13 +319,10 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'erreur.ERREUR_INTERNE': 'The server hit an error. Please try again shortly.',
     'erreur.RESEAU_INJOIGNABLE': 'Cannot reach the server. Check your connection.',
     'erreur.defaut': 'An unexpected error occurred.',
-    'etudiant.en-attente': 'Exercise submission and peer reviews arrive with upcoming tickets.',
 
     'relecteur.kicker': 'Reviewer area',
     'relecteur.titre': 'Your assigned reviews',
-    'relecteur.tagline':
-      'Exercises assigned to you for review, with grade and comment.',
-    'relecteur.en-attente': 'Available with tickets EF9 to EF12.',
+    'relecteur.tagline': 'Exercises assigned to you for review, with grade and comment.',
     'relecteur.choisir-identite': 'Choose your identity to see the exercises assigned to you.',
     'relecteur.a-faire': 'To review',
     'relecteur.aucune-en-attente': 'You have no reviews waiting right now.',
@@ -316,7 +344,6 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'formateur.titre': 'Open a session',
     'formateur.tagline':
       'Create the session, share the 6-character code, then track attendance and reviews live.',
-    'formateur.en-attente': 'Session creation (EF1) and tracking dashboard (EF16) land here.',
     'formateur.etiquette-titre': 'Session title',
     'formateur.placeholder-titre': 'e.g. Algorithms — session 1',
     'formateur.action': 'Open the session',
@@ -354,6 +381,7 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'tableau.moyenne': 'Average',
     'tableau.en-attente': 'Pending reviews',
     'tableau.sans-note': 'No grade',
+    'tableau.provisoire': 'provisional',
   },
 };
 

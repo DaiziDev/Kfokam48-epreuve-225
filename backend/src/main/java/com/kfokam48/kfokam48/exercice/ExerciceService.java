@@ -1,12 +1,16 @@
 package com.kfokam48.kfokam48.exercice;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,15 +28,18 @@ import com.kfokam48.kfokam48.session.SessionRepository;
 import com.kfokam48.kfokam48.session.SessionStatut;
 
 /**
- * EF6 : dépôt du lien d'exercice, avec assignation immédiate d'un relecteur
- * tiré au hasard parmi les présents hors auteur (EF8, RG4, RG5, RG6).
- * EF7 : remplacement du lien tant que la relecture n'est pas rendue (RG12).
- * EF12 : consultation de la note et du commentaire, sans le relecteur (RG7).
+ * EF6 : dépôt du lien d'exercice, avec assignation immédiate de deux relecteurs
+ * distincts tirés au hasard parmi les présents hors auteur (EF8, RG4, RG5, RG6).
+ * EF7 : remplacement du lien tant qu'aucune relecture n'est rendue (RG12).
+ * EF12 : consultation des notes et commentaires, sans les relecteurs (RG7) —
+ * moyenne définitive après deux rendus, note provisoire après un seul.
  */
 @Service
 public class ExerciceService {
 
     private static final int LONGUEUR_MAX_LIEN = 2048;
+    /** Exigence révisée : chaque exercice est relu par deux relecteurs. */
+    private static final int NOMBRE_RELECTEURS = 2;
 
     private final ExerciceRepository exercices;
     private final RelectureRepository relectures;
@@ -77,14 +84,15 @@ public class ExerciceService {
             throw new ExerciceDejaDeposeException();
         }
 
-        // 6. Un relecteur éligible existe, sinon refus transitoire (422, section 7)
-        List<Long> candidats = presences.presentsHorsAuteur(sessionId, etudiantId);
-        if (candidats.isEmpty()) {
+        // 6. Deux relecteurs éligibles existent, sinon refus transitoire (422, section 7) :
+        //    présents, distincts de l'auteur (RG4) et l'un de l'autre (RG5), tirés au hasard (RG6).
+        List<Long> candidats = new ArrayList<>(presences.presentsHorsAuteur(sessionId, etudiantId));
+        if (candidats.size() < NOMBRE_RELECTEURS) {
             throw new AucunRelecteurDisponibleException();
         }
-        Long relecteurId = candidats.get(aleatoire.nextInt(candidats.size())); // RG6
+        Set<Long> relecteurs = tirerDeuxRelecteurs(candidats);
 
-        // 7. Cas nominal : exercice EN_ATTENTE_RELECTURE et sa relecture assignée (RG5)
+        // 7. Cas nominal : exercice EN_ATTENTE_RELECTURE et ses deux relectures assignées (RG5)
         ExerciceEntity exercice = new ExerciceEntity();
         exercice.setSession(session);
         exercice.setAuteur(auteur);
@@ -93,17 +101,34 @@ public class ExerciceService {
         exercice.setDeposeAt(horloge.instant());
         exercices.save(exercice);
 
-        RelectureEntity relecture = new RelectureEntity();
-        relecture.setExercice(exercice);
-        relecture.setRelecteur(etudiants.getReferenceById(relecteurId));
-        relectures.save(relecture);
+        var iterateurRelecteurs = relecteurs.iterator();
+        for (int rang = RelectureEntity.PREMIERE; rang <= NOMBRE_RELECTEURS; rang++) {
+            RelectureEntity relecture = new RelectureEntity();
+            relecture.setExercice(exercice);
+            relecture.setRelecteur(etudiants.getReferenceById(iterateurRelecteurs.next()));
+            relecture.setRang(rang);
+            relectures.save(relecture);
+        }
 
         return new ExerciceEtat(exercice.getId(), exercice.getStatut());
     }
 
     /**
+     * RG6 : tirage au hasard de deux relecteurs distincts parmi les candidats
+     * éligibles. L'ensemble déduplique, puis on complète si le tirage est tombé
+     * deux fois sur le même candidat.
+     */
+    private Set<Long> tirerDeuxRelecteurs(List<Long> candidats) {
+        Set<Long> tires = new LinkedHashSet<>();
+        while (tires.size() < NOMBRE_RELECTEURS) {
+            tires.add(candidats.get(aleatoire.nextInt(candidats.size())));
+        }
+        return tires;
+    }
+
+    /**
      * EF7/RG12 : indépendant de la clôture de session ; seul compte le rendu de
-     * la relecture. Le relecteur assigné reste le même.
+     * la première relecture. Les relecteurs assignés restent les mêmes.
      */
     @Transactional
     public ExerciceEtat remplacerLien(Long exerciceId, Long etudiantId, String lienBrut) {
@@ -119,8 +144,9 @@ public class ExerciceService {
             throw new NonAuteurException();
         }
 
-        // 4. Aucune relecture rendue (409, RG12 — « démarrée » tranché en section 7)
-        if (exercice.getStatut() == ExerciceStatut.RELU) {
+        // 4. Le lien se verrouille dès le premier rendu, même si la moyenne
+        //    reste provisoire jusqu'au second (RG12).
+        if (relectures.countByExerciceIdAndRendueAtIsNotNull(exerciceId) > 0) {
             throw new RelectureDejaCommenceeException();
         }
 
@@ -129,22 +155,47 @@ public class ExerciceService {
     }
 
     /**
-     * EF12/RG7 : l'étudiant consulte son exercice, note et commentaire inclus
-     * une fois la relecture rendue. Rien ici ne lit le relecteur : le détail ne
-     * peut donc pas le laisser fuir, même par erreur de sérialisation.
+     * EF12/RG7 : l'étudiant consulte son exercice. Depuis l'exigence révisée,
+     * la réponse porte les deux notes rendues, la moyenne (définitive après
+     * deux rendus, provisoire après un seul) et les deux commentaires — mais
+     * jamais l'identité d'un relecteur.
      */
     @Transactional(readOnly = true)
     public ExerciceDetail consulter(Long exerciceId) {
         ExerciceEntity exercice = exercices.findById(exerciceId)
                 .orElseThrow(() -> new ExerciceInconnuException(exerciceId));
 
-        // Note et commentaire n'existent qu'une fois la relecture rendue (RG9)
-        Optional<RelectureEntity> rendue = relectures.findByExerciceId(exerciceId)
-                .filter(r -> r.getRendueAt() != null);
+        // Notes et commentaires n'existent qu'une fois les relectures rendues (RG9)
+        List<RelectureEntity> relecturesExercice = relectures.findByExerciceIdOrderByRangAsc(exerciceId);
+        List<Integer> notesRendues = relecturesExercice.stream()
+                .filter(r -> r.getRendueAt() != null)
+                .map(RelectureEntity::getNote)
+                .toList();
+        List<String> commentairesRendus = relecturesExercice.stream()
+                .filter(r -> r.getRendueAt() != null)
+                .map(RelectureEntity::getCommentaire)
+                .toList();
+
+        BigDecimal note = null;
+        boolean provisoire = false;
+        if (notesRendues.size() == 1) {
+            // Un seul rendu : la note est provisoire, sans calcul (RG10)
+            note = BigDecimal.valueOf(notesRendues.get(0));
+            provisoire = true;
+        } else if (notesRendues.size() >= 2) {
+            // Deux rendus : la moyenne devient la note finale (exigence révisée).
+            // Moyenne de deux entiers = X ou X.5 ; 15.0 est exposé comme 15,
+            // et jamais en notation exponentielle par stripTrailingZeros.
+            int somme = notesRendues.get(0) + notesRendues.get(1);
+            BigDecimal moyenne = BigDecimal.valueOf(somme)
+                    .divide(BigDecimal.valueOf(2), 1, RoundingMode.HALF_UP);
+            note = (moyenne.stripTrailingZeros().scale() <= 0)
+                    ? BigDecimal.valueOf(moyenne.intValueExact())
+                    : moyenne;
+        }
 
         return new ExerciceDetail(exercice.getId(), exercice.getLien(), exercice.getStatut(),
-                rendue.map(RelectureEntity::getNote).orElse(null),
-                rendue.map(RelectureEntity::getCommentaire).orElse(null));
+                note, provisoire, commentairesRendus);
     }
 
     /** « Mes exercices » de l'étudiant — sans note ni relecteur : le détail passe par EF12. */
@@ -186,7 +237,13 @@ public class ExerciceService {
     public record ExerciceResume(Long id, Long sessionId, String sessionTitre, String lien, ExerciceStatut statut) {
     }
 
-    /** Aucun champ relecteur, par construction (RG7). */
-    public record ExerciceDetail(Long id, String lien, ExerciceStatut statut, Integer note, String commentaire) {
+    /**
+     * Aucun champ relecteur, par construction (RG7). notes et commentaires
+     * suivent le rang des relectures ; moyenne est nulle tant que les deux
+     * notes ne sont pas rendues — après un seul rendu, noteProvisoire
+     * l'expose (exigence révisée).
+     */
+    public record ExerciceDetail(Long id, String lien, ExerciceStatut statut,
+            BigDecimal note, boolean noteProvisoire, List<String> commentaires) {
     }
 }

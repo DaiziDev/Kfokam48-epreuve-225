@@ -27,5 +27,6 @@ export interface ExerciceDetail {
   lien: string;
   statut: StatutExercice;
   note: number | null;
-  commentaire: string | null;
+  noteProvisoire: boolean;
+  commentaires: string[];
 }

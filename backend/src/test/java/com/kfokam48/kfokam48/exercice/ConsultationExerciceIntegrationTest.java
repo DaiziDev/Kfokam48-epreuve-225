@@ -42,7 +42,7 @@ class ConsultationExerciceIntegrationTest {
 
     private static final String LIEN = "https://github.com/alice/exercice-algo";
     /** Seuls champs autorisés par le contrat : tout ajout doit être une décision explicite. */
-    private static final Set<String> CHAMPS_DU_CONTRAT = Set.of("id", "lien", "statut", "note", "commentaire");
+    private static final Set<String> CHAMPS_DU_CONTRAT = Set.of("id", "lien", "statut", "note", "noteProvisoire", "commentaires");
 
     @Autowired
     private MockMvc mockMvc;
@@ -61,6 +61,7 @@ class ConsultationExerciceIntegrationTest {
 
     private Long alice;
     private Long boris;
+    private Long chloe;
     /** Exercice d'Alice, relu par Boris (seul autre présent). */
     private Long exerciceAlice;
 
@@ -71,6 +72,7 @@ class ConsultationExerciceIntegrationTest {
         promotion = promotions.save(promotion);
         alice = etudiants.save(etudiant(promotion, "Alice")).getId();
         boris = etudiants.save(etudiant(promotion, "Boris Relecteur")).getId();
+        chloe = etudiants.save(etudiant(promotion, "Chloé Relectrice")).getId();
 
         MvcResult session = mockMvc.perform(post("/api/sessions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -79,7 +81,7 @@ class ConsultationExerciceIntegrationTest {
                 .andReturn();
         Long sessionId = lire(session).get("id").asLong();
 
-        for (Long etudiantId : new Long[] { alice, boris }) {
+        for (Long etudiantId : new Long[] { alice, boris, chloe }) {
             mockMvc.perform(post("/api/sessions/" + sessionId + "/presences")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"etudiantId\":" + etudiantId + "}"))
@@ -106,10 +108,12 @@ class ConsultationExerciceIntegrationTest {
     }
 
     private void rendreRelecture(int note, String commentaire) throws Exception {
-        Long relectureId = relectures.findByExerciceId(exerciceAlice).orElseThrow().getId();
+        var relecture = relectures.findByExerciceIdOrderByRangAsc(exerciceAlice).stream()
+                .filter(r -> r.getRendueAt() == null).findFirst().orElseThrow();
+        Long relectureId = relecture.getId();
         mockMvc.perform(post("/api/relectures/" + relectureId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"relecteurId\":" + boris + ",\"note\":" + note
+                .content("{\"relecteurId\":" + relecture.getRelecteur().getId() + ",\"note\":" + note
                         + ",\"commentaire\":\"" + commentaire + "\"}"))
                 .andExpect(status().isOk());
     }
@@ -122,18 +126,33 @@ class ConsultationExerciceIntegrationTest {
                 .andExpect(jsonPath("$.lien").value(LIEN))
                 .andExpect(jsonPath("$.statut").value("EN_ATTENTE_RELECTURE"))
                 .andExpect(jsonPath("$.note").isEmpty())
-                .andExpect(jsonPath("$.commentaire").isEmpty());
+                .andExpect(jsonPath("$.noteProvisoire").value(false))
+                .andExpect(jsonPath("$.commentaires").isEmpty());
     }
 
     @Test
-    void apresLaRelectureLEtudiantVoitSaNoteEtLeCommentaire() throws Exception {
+    void apresUneRelectureLEtudiantVoitUneNoteProvisoireEtLeCommentaireAnonyme() throws Exception {
         rendreRelecture(15, "Bonne structure, tests à compléter.");
 
         mockMvc.perform(get("/api/exercices/" + exerciceAlice))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statut").value("RELU"))
+                .andExpect(jsonPath("$.statut").value("EN_ATTENTE_RELECTURE"))
                 .andExpect(jsonPath("$.note").value(15))
-                .andExpect(jsonPath("$.commentaire").value("Bonne structure, tests à compléter."));
+                .andExpect(jsonPath("$.noteProvisoire").value(true))
+                .andExpect(jsonPath("$.commentaires[0]").value("Bonne structure, tests à compléter."));
+    }
+
+    @Test
+    void apresDeuxRelecturesLaNoteRetenueEstLeurMoyenneEtElleNestPlusProvisoire() throws Exception {
+        rendreRelecture(15, "Premier retour.");
+        rendreRelecture(16, "Second retour.");
+
+        mockMvc.perform(get("/api/exercices/" + exerciceAlice))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statut").value("RELU"))
+                .andExpect(jsonPath("$.note").value(15.5))
+                .andExpect(jsonPath("$.noteProvisoire").value(false))
+                .andExpect(jsonPath("$.commentaires.length()").value(2));
     }
 
     @Test
@@ -149,10 +168,10 @@ class ConsultationExerciceIntegrationTest {
         Set<String> champs = new HashSet<>(corps.propertyNames());
         assertThat(champs).isEqualTo(CHAMPS_DU_CONTRAT);
 
-        // Et aucune valeur ne trahit le relecteur (nom ou identifiant)
+        // Et aucune valeur ne trahit les relecteurs (nom ou identifiant)
         String brut = resultat.getResponse().getContentAsString();
-        assertThat(brut).doesNotContainIgnoringCase("relecteur").doesNotContain("Boris");
-        assertThat(corps.get("id").asLong()).isNotEqualTo(boris);
+        assertThat(brut).doesNotContainIgnoringCase("relecteur").doesNotContain("Boris").doesNotContain("Chloé");
+        assertThat(corps.get("id").asLong()).isNotEqualTo(boris).isNotEqualTo(chloe);
     }
 
     @Test

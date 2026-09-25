@@ -5,6 +5,10 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Modifié — ticket #23
+- Chaque nouvel exercice est attribué à deux pairs distincts. La première note est provisoire ; la seconde rendue fixe la moyenne finale. Le détail étudiant expose les commentaires anonymisés et le tableau signale les moyennes provisoires.
+- Migration V7 ajoute le second rang de relecture en préservant les notes déjà rendues ; le blocage après 5 codes erronés (EF4, Should, non développé) est reporté à v1.1 pour absorber ce Must tardif ; l'auto-clôture (EF14), déjà livrée en v0.1, reste en place.
+
 ### Ajouté
 - **Design system frontend** (benchmark documenté dans `docs/DESIGN.md`) : tokens Tailwind 4 (`@theme`) — indigo de marque, statuts sémantiques emerald/amber/red, typo Inter + mono ; composants `ui-icon` (SVG Lucide inlinés, zéro emoji, zéro dépendance), `ui-badge-statut`, `ui-code-input` (6 cases, collage, navigation clavier, CVA) ; i18n FR/EN par signals avec bascule instantanée.
 - **Socle frontend** : couche API complète (services et types pour toutes les opérations du contrat, testés verbe + chemin + corps) ; sélecteur d'identité « Je suis » (fin des `etudiantId: 1` / `promotionId: 1` en dur) ; 26 codes d'erreur du contrat traduits FR/EN via le pipe `erreurApi`.

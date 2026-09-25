@@ -21,12 +21,12 @@ public class TableauController {
     public List<LigneTableauResponse> consulter(@RequestParam("promotionId") Long promotionId) {
         return service.construire(promotionId).stream()
                 .map(l -> new LigneTableauResponse(l.etudiantId(), l.nom(), l.presences(), l.exercicesDeposes(),
-                        l.moyenne(), l.relecturesEnAttente()))
+                        l.moyenne(), l.moyenneProvisoire(), l.relecturesEnAttente()))
                 .toList();
     }
 
     /** Ligne du contrat imposé : { etudiantId, nom, presences, exercicesDeposes, moyenne, relecturesEnAttente }. */
     public record LigneTableauResponse(Long etudiantId, String nom, int presences, int exercicesDeposes,
-            BigDecimal moyenne, int relecturesEnAttente) {
+            BigDecimal moyenne, boolean moyenneProvisoire, int relecturesEnAttente) {
     }
 }

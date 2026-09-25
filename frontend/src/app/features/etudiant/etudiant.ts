@@ -7,7 +7,7 @@ import { PROMOTION_COURANTE } from '../../core/api/promotion';
 import { ExercicesApiService } from '../../core/exercices/exercices-api.service';
 import { IdentiteService } from '../../core/identite/identite.service';
 import { SessionsApiService } from '../../core/sessions/sessions-api.service';
-import { ExerciceResume } from '../../core/types/exercice';
+import { ExerciceDetail, ExerciceResume } from '../../core/types/exercice';
 import { SessionResume } from '../../core/types/session';
 import { ErreurApiPipe } from '../../ui/i18n/erreur-api.pipe';
 import { TPipe } from '../../ui/i18n/t.pipe';
@@ -37,6 +37,7 @@ export class Etudiant {
   readonly succes = signal(false);
   readonly sessionsEligibles = signal<SessionResume[]>([]);
   readonly mesExercices = signal<ExerciceResume[]>([]);
+  readonly detailsExercices = signal<Record<number, ExerciceDetail>>({});
   readonly chargementExercices = signal(false);
   readonly depotEnCours = signal(false);
   readonly erreurExercices = signal<ApiError | null>(null);
@@ -110,6 +111,17 @@ export class Etudiant {
           return;
         }
         this.mesExercices.set(exercices);
+        if (exercices.length === 0) {
+          this.detailsExercices.set({});
+        } else {
+          forkJoin(exercices.map((exercice) => this.exercicesApi.consulter(exercice.id))).subscribe({
+            next: (details) => {
+              if (this.identite.etudiantId() === etudiantId) {
+                this.detailsExercices.set(Object.fromEntries(details.map((detail) => [detail.id, detail])));
+              }
+            },
+          });
+        }
         const ouvertes = sessions.filter((session) => session.statut === 'OUVERTE');
         if (ouvertes.length === 0) {
           this.sessionsEligibles.set([]);
