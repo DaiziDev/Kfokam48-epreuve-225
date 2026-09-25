@@ -31,8 +31,8 @@ Controller (DTO validés) → Service (règles métier) → Repository (JPA) →
   → toutes les erreurs au format imposé `{ code, message }`, y compris JSON malformé
   (400 `CORPS_INVALIDE` au lieu du 500 par défaut).
 - **`Clock` injectable** (`conf/HorlogeConfiguration`) : RG1 (+15 min), puis RG3
-  (blocage 2 min) et RG14 (auto-clôture 24h) calculent le temps via ce bean — testable
-  par horloge figée, sans attendre ni mocker.
+  (blocage 2 min) calculent le temps via ce bean — testables par horloge figée.
+  RG14 (auto-clôture) est reportée à v1.1 par le ticket #23.
 
 ### Organisation des paquetages
 
@@ -43,7 +43,7 @@ com.kfokam48.kfokam48
 ├── api/         GestionErreursAdvice (transverse)
 ├── conf/        Clock, OpenAPI (transverse)
 ├── session/     sessions, étudiants, présences : contrôleurs, services, entités, repos, exceptions
-├── exercice/    dépôt et remplacement du lien, tirage du relecteur (EF6–EF8)
+├── exercice/    dépôt et remplacement du lien, tirage de deux relecteurs (EF6–EF8)
 ├── relecture/   rendu de la relecture, liste des relectures d'un relecteur (EF9–EF11)
 └── tableau/     tableau de suivi (EF16) : lecture seule, agrégats JPQL via EntityManager
 ```
@@ -57,16 +57,13 @@ Les présences sont restées dans `session/` (fortement liées au code de sessio
 - Identifiants **`BIGINT IDENTITY`** générés par la base (alignés sur le contrat int64,
   jamais d'UUID applicatif — cf. D2).
 - **Flyway versionné** : V1 promotion + session_cours, V2 promotion de démonstration,
-  V3 etudiant + presence, V4 index de l'auto-clôture, V5 exercice + relecture. Une migration par ticket,
-  l'historique raconte les stories.
+  V3 etudiant + presence, V4 index auto-clôture, V5 exercice + relecture, V6 données de démo,
+  V7 double relecture. Une migration par ticket, l'historique raconte les stories.
 
 ### Tâches planifiées
 
-- **Auto-clôture (RG14)** : `session/AutoClotureTache` appelle chaque minute
-  `SessionService.cloturerSessionsEchues()`. La règle reste dans le service (testable
-  par horloge déplaçable) ; la tâche ne fait que la déclencher.
-- Coupée en profil test (`kfokam48.auto-cloture.active=false`) : pas de thread de fond
-  qui modifie les données pendant qu'un test les vérifie.
+- **Auto-clôture (RG14)** : code conservé de v0.1, mais fonction différée à v1.1
+  par la repriorisation #23 ; elle ne fait pas partie du périmètre livré avec la double relecture.
 
 ## Frontend
 
