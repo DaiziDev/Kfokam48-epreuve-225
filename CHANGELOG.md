@@ -5,6 +5,9 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Corrigé
+- **#22 — pointages simultanés** : plusieurs pointages simultanés du même étudiant renvoyaient `500` (violation d'unicité) au lieu de `409 DEJA_PRESENT` ; un verrou d'écriture sur la session sérialise désormais les pointages. Test d'intégration sur vrai serveur HTTP, rejoué 10 fois : rouge avant le correctif (`[500, 500, 500, 201]`), vert après. Deux étudiants différents pointant en même temps sont tous deux enregistrés et renvoyés par l'API (la perte apparente côté formateur venait de la liste non rafraîchie, corrigée par la PR #26).
+
 ### Ajouté
 - **Design system frontend** (benchmark documenté dans `docs/DESIGN.md`) : tokens Tailwind 4 (`@theme`) — indigo de marque, statuts sémantiques emerald/amber/red, typo Inter + mono ; composants `ui-icon` (SVG Lucide inlinés, zéro emoji, zéro dépendance), `ui-badge-statut`, `ui-code-input` (6 cases, collage, navigation clavier, CVA) ; i18n FR/EN par signals avec bascule instantanée.
 - **Socle frontend** : couche API complète (services et types pour toutes les opérations du contrat, testés verbe + chemin + corps) ; sélecteur d'identité « Je suis » (fin des `etudiantId: 1` / `promotionId: 1` en dur) ; 26 codes d'erreur du contrat traduits FR/EN via le pipe `erreurApi`.
