@@ -5,6 +5,15 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+- Architecture frontend : SPA Angular sans SSR, couche API isolée (`core/api/` : token `API_URL`, intercepteur d'erreurs normalisant en `{ code, message }`, service par ressource du contrat), types TS miroir du contrat, 3 écrans lazy (`etudiant/`, `relecteur/`, `formateur/`), proxy de dev vers le backend. Documentée dans `docs/ARCHITECTURE.md`.
+- `docs/ARCHITECTURE.md` : décisions backend/frontend documentées, alternatives rejetées.
+- Swagger UI (springdoc 3.1.1) : `/swagger-ui.html`, métadonnées issues du contrat.
+- Migration `V2__promotion_demo.sql` : promotion KFOKAM48 de démonstration (ENF2).
+- Gestion du JSON malformé : 400 `CORPS_INVALIDE` au lieu du 500 générique.
+- **EF1 (Must)** — `POST /api/sessions` : le formateur ouvre une session et obtient un code de présence. 201 avec `id, code, ouvertureAt, expirationAt, statut` ; `expirationAt = ouvertureAt + 15 min` (RG1) ; 400 `CHAMPS_REQUIS` si champ manquant ; 404 `PROMOTION_INCONNUE` (décision section 7).
+- Migration Flyway `V1__sessions_et_promotions.sql` : tables `promotion` et `session_cours` en `BIGINT IDENTITY`, code de session unique indexé.
+
 ## [0.1.0] — analyse
 
 ### Ajouté
