@@ -1,0 +1,158 @@
+<div class="mx-auto max-w-3xl space-y-5 px-4 py-8">
+  <section class="card p-6 sm:p-8">
+    <p class="kicker">{{ 'relecteur.kicker' | t }}</p>
+    <h1 class="screen-title">{{ 'relecteur.titre' | t }}</h1>
+    <p class="tagline">{{ 'relecteur.tagline' | t }}</p>
+
+    <app-selecteur-identite class="mt-6 block" />
+
+    @if (identite.etudiantId() === null) {
+      <p class="note mt-5">{{ 'relecteur.choisir-identite' | t }}</p>
+    } @else {
+      <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+          {{ 'relecteur.a-faire' | t }}
+          <span class="text-sm font-normal text-slate-500 dark:text-slate-400">({{ enAttente().length }})</span>
+        </h2>
+        <button type="button" class="btn-secondary !px-2.5 !py-1.5" (click)="charger()" [disabled]="chargement()" [attr.aria-label]="'commun.actualiser' | t">
+          <ui-icon name="refresh-cw" class="text-sm" />
+        </button>
+      </div>
+
+      @if (chargement()) {
+        <p class="note mt-4">{{ 'commun.chargement' | t }}</p>
+      }
+
+      @if (erreur()) {
+        <p class="mt-4 flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-4 text-sm text-danger" role="alert">
+          <ui-icon name="alert" class="mt-0.5 text-base" />
+          {{ erreur() | erreurApi }}
+        </p>
+      }
+
+      @if (succes()) {
+        <p class="mt-4 flex items-start gap-2 rounded-lg border border-success-border bg-success-soft p-4 text-sm text-success" role="status">
+          <ui-icon name="check-circle-2" class="mt-0.5 text-base" />
+          {{ 'relecteur.succes' | t }}
+        </p>
+      }
+
+      @if (!chargement() && enAttente().length === 0) {
+        <p class="note mt-4">{{ 'relecteur.aucune-en-attente' | t }}</p>
+      } @else if (enAttente().length > 0) {
+        <ul class="mt-4 space-y-2" aria-label="{{ 'relecteur.a-faire' | t }}">
+          @for (relecture of enAttente(); track relecture.id) {
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+                [class.border-brand-500]="relecture.id === relectureActiveId()"
+                [class.bg-brand-50]="relecture.id === relectureActiveId()"
+                [class.border-slate-200]="relecture.id !== relectureActiveId()"
+                [class.dark:border-slate-700]="relecture.id !== relectureActiveId()"
+                [attr.aria-pressed]="relecture.id === relectureActiveId()"
+                (click)="selectionner(relecture)"
+              >
+                <span class="min-w-0 break-all text-sm font-medium text-slate-800 dark:text-slate-100">{{ relecture.exerciceLien }}</span>
+                <ui-icon name="external-link" class="shrink-0 text-base text-slate-500" />
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (relectureActive(); as relecture) {
+          <section class="mt-5 rounded-xl border border-slate-200 p-4 dark:border-slate-800 sm:p-5" aria-labelledby="formulaire-relecture">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p class="kicker">{{ 'relecteur.exercice-a-relire' | t }}</p>
+                <h3 id="formulaire-relecture" class="mt-1 font-semibold text-slate-900 dark:text-slate-50">{{ 'relecteur.note-et-commentaire' | t }}</h3>
+              </div>
+              <a
+                class="btn-secondary shrink-0"
+                [href]="relecture.exerciceLien"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ui-icon name="external-link" class="text-base" />
+                {{ 'relecteur.ouvrir-exercice' | t }}
+              </a>
+            </div>
+
+            <div class="mt-5 space-y-4">
+              <div>
+                <label for="note-relecture" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {{ 'relecteur.note' | t }}
+                </label>
+                <input
+                  id="note-relecture"
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="1"
+                  inputmode="numeric"
+                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  [ngModel]="note"
+                  (ngModelChange)="surNoteChange($event)"
+                  [placeholder]="'relecteur.note-placeholder' | t"
+                />
+                <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ 'relecteur.note-aide' | t }}</p>
+              </div>
+
+              <div>
+                <label for="commentaire-relecture" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {{ 'relecteur.commentaire' | t }}
+                </label>
+                <textarea
+                  id="commentaire-relecture"
+                  rows="5"
+                  maxlength="4000"
+                  class="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  [ngModel]="commentaire"
+                  (ngModelChange)="commentaire = $event"
+                  [placeholder]="'relecteur.commentaire-placeholder' | t"
+                ></textarea>
+                <p class="mt-1.5 text-right text-xs text-slate-500 dark:text-slate-400">{{ commentaire.length }} / 4000</p>
+              </div>
+
+              <button
+                type="button"
+                class="btn-primary w-full"
+                [disabled]="envoi() || note === null || note < 0 || note > 20 || !commentaire.trim() || commentaire.length > 4000"
+                (click)="rendre()"
+              >
+                @if (envoi()) {
+                  <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+                } @else {
+                  <ui-icon name="clipboard-check" class="text-base" />
+                }
+                {{ 'relecteur.envoyer' | t }}
+              </button>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ 'relecteur.rendu-definitif' | t }}</p>
+            </div>
+          </section>
+        }
+      }
+    }
+  </section>
+
+  @if (identite.etudiantId() !== null && terminees().length > 0) {
+    <section class="card p-6 sm:p-8">
+      <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+        {{ 'relecteur.terminees' | t }} <span class="text-sm font-normal text-slate-500 dark:text-slate-400">({{ terminees().length }})</span>
+      </h2>
+      <ul class="mt-4 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+        @for (relecture of terminees(); track relecture.id) {
+          <li class="flex flex-wrap items-center justify-between gap-3 px-3 py-3">
+            <a class="min-w-0 break-all text-sm font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 dark:text-brand-300" [href]="relecture.exerciceLien" target="_blank" rel="noopener noreferrer">
+              {{ relecture.exerciceLien }}
+            </a>
+            <span class="flex shrink-0 items-center gap-1.5 text-sm text-success">
+              <ui-icon name="check-circle-2" class="text-base" />
+              {{ 'relecteur.statut-rendue' | t }}
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

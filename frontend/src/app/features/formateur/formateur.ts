@@ -1,11 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SessionsApiService } from '../../core/sessions/sessions-api.service';
 import { ApiError } from '../../core/api/erreur-api';
+import { PROMOTION_COURANTE } from '../../core/api/promotion';
+import { ErreurApiPipe } from '../../ui/i18n/erreur-api.pipe';
 import { TPipe } from '../../ui/i18n/t.pipe';
 import { UiIcon } from '../../ui/icon/ui-icon';
-import { I18nService } from '../../ui/i18n/i18n.service';
-import { SessionCreee } from '../../core/types/session';
+import { SessionResume } from '../../core/types/session';
+import { SessionDetail } from './session-detail';
+import { TableauSuivi } from './tableau-suivi';
 
 /**
  * Écran formateur : ouverture de session (EF1) avec affichage du code de
@@ -14,18 +17,39 @@ import { SessionCreee } from '../../core/types/session';
 @Component({
   selector: 'app-formateur',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TPipe, UiIcon],
+  imports: [FormsModule, TPipe, ErreurApiPipe, UiIcon, SessionDetail, TableauSuivi],
   templateUrl: './formateur.html',
 })
 export class Formateur {
   private readonly sessions = inject(SessionsApiService);
-  private readonly i18n = inject(I18nService);
+  private readonly promotionId = inject(PROMOTION_COURANTE);
 
   readonly chargement = signal(false);
   readonly erreur = signal<ApiError | null>(null);
-  readonly session = signal<SessionCreee | null>(null);
+  readonly sessionsListe = signal<SessionResume[]>([]);
+  readonly session = signal<SessionResume | null>(null);
+  readonly erreurListe = signal<ApiError | null>(null);
 
   titre = '';
+
+  constructor() {
+    this.chargerSessions();
+  }
+
+  chargerSessions(): void {
+    this.erreurListe.set(null);
+    this.sessions.lister(this.promotionId).subscribe({
+      next: (liste) => {
+        this.sessionsListe.set(liste);
+        const selection = this.session();
+        const sessionActualisee = selection && liste.find((element) => element.id === selection.id);
+        if (sessionActualisee) {
+          this.session.set(sessionActualisee);
+        }
+      },
+      error: (erreur: ApiError) => this.erreurListe.set(erreur),
+    });
+  }
 
   ouvrir(): void {
     if (!this.titre.trim() || this.chargement()) {
@@ -35,12 +59,13 @@ export class Formateur {
     this.erreur.set(null);
 
     this.sessions
-      .ouvrirSession({ titre: this.titre.trim(), promotionId: 1 })
+      .ouvrirSession({ titre: this.titre.trim(), promotionId: this.promotionId })
       .subscribe({
         next: (session) => {
-          this.session.set(session);
+          this.session.set({ ...session, titre: this.titre.trim() });
+          this.titre = '';
           this.chargement.set(false);
-          this.demarrerCompteARebours();
+          this.chargerSessions();
         },
         error: (erreur: ApiError) => {
           this.erreur.set(erreur);
@@ -49,23 +74,12 @@ export class Formateur {
       });
   }
 
-  /** Compte à rebours jusqu'à expirationAt (RG1) — minute par minute. */
-  private demarrerCompteARebours(): void {
-    const session = this.session();
-    if (!session) {
-      return;
-    }
-    const expiration = new Date(session.expirationAt).getTime();
-    const tick = () => {
-      const restant = Math.max(0, expiration - Date.now());
-      this.minutesRestantes.set(Math.floor(restant / 60000));
-      if (restant > 0) {
-        setTimeout(tick, 1000);
-      }
-    };
-    tick();
+  selectionnerSession(session: SessionResume): void {
+    this.session.set(session);
   }
 
-  readonly minutesRestantes = signal<number | null>(null);
-  readonly expirationPassee = computed(() => (this.minutesRestantes() ?? 1) <= 0);
+  reinitialiserSelection(): void {
+    this.session.set(null);
+    this.chargerSessions();
+  }
 }

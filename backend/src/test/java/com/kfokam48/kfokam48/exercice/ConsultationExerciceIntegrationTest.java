@@ -168,6 +168,30 @@ class ConsultationExerciceIntegrationTest {
     }
 
     @Test
+    void mesExercicesListeCeuxDeLEtudiantSansRienSurLeRelecteur() throws Exception {
+        MvcResult resultat = mockMvc.perform(get("/api/exercices").param("etudiantId", alice.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(exerciceAlice))
+                .andExpect(jsonPath("$[0].sessionTitre").value("Algorithmique"))
+                .andExpect(jsonPath("$[0].lien").value(LIEN))
+                .andExpect(jsonPath("$[0].statut").value("EN_ATTENTE_RELECTURE"))
+                .andReturn();
+
+        // RG7 aussi sur la liste : champs exacts, aucune trace du relecteur
+        JsonNode ligne = lire(resultat).get(0);
+        assertThat(new HashSet<>(ligne.propertyNames()))
+                .isEqualTo(Set.of("id", "sessionId", "sessionTitre", "lien", "statut"));
+        assertThat(resultat.getResponse().getContentAsString()).doesNotContain("Boris");
+
+        mockMvc.perform(get("/api/exercices").param("etudiantId", boris.toString()))
+                .andExpect(jsonPath("$.length()").value(0));
+        mockMvc.perform(get("/api/exercices").param("etudiantId", "999999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ETUDIANT_INCONNU"));
+    }
+
+    @Test
     void exerciceInconnuRenvoie404() throws Exception {
         mockMvc.perform(get("/api/exercices/999999"))
                 .andExpect(status().isNotFound())

@@ -11,3 +11,14 @@ export interface SessionCreee {
   expirationAt: string;
   statut: StatutSession;
 }
+
+/** Ligne de GET /api/sessions?promotionId= — la plus récente d'abord. */
+export interface SessionResume extends SessionCreee {
+  titre: string;
+}
+
+/** Réponse 200 de PATCH /api/sessions/{id}/cloture et /reouverture (EF13/EF15). */
+export interface StatutSessionChange {
+  id: number;
+  statut: StatutSession;
+}

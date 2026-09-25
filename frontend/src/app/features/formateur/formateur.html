@@ -1,58 +1,79 @@
-<section class="card p-6">
-  @if (!session()) {
-    <p class="kicker">{{ 'formateur.kicker' | t }}</p>
-    <h1 class="screen-title">{{ 'formateur.titre' | t }}</h1>
-    <p class="tagline">{{ 'formateur.tagline' | t }}</p>
+<div class="mx-auto max-w-4xl space-y-5 px-4 py-8">
+  @if (session(); as sessionActive) {
+    <button type="button" class="btn-secondary" (click)="reinitialiserSelection()">
+      <ui-icon name="arrow-left" class="text-base" />
+      {{ 'formateur.retour-sessions' | t }}
+    </button>
+    <app-session-detail [session]="sessionActive" (statutChange)="chargerSessions()" />
+  } @else {
+    <section class="card p-6 sm:p-8">
+      <p class="kicker">{{ 'formateur.kicker' | t }}</p>
+      <h1 class="screen-title">{{ 'formateur.titre' | t }}</h1>
+      <p class="tagline">{{ 'formateur.tagline' | t }}</p>
 
-    <div class="mt-6 space-y-4">
-      <div>
-        <label for="titre" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
-          {{ 'formateur.etiquette-titre' | t }}
-        </label>
-        <input
-          id="titre"
-          type="text"
-          name="titre"
-          class="w-full rounded-lg border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
-          [ngModel]="titre"
-          (ngModelChange)="titre = $event"
-          [placeholder]="'formateur.placeholder-titre' | t"
-        />
+      <div class="mt-6 space-y-4">
+        <div>
+          <label for="titre" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
+            {{ 'formateur.etiquette-titre' | t }}
+          </label>
+          <input
+            id="titre"
+            type="text"
+            name="titre"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-brand-800"
+            [ngModel]="titre"
+            (ngModelChange)="titre = $event"
+            [placeholder]="'formateur.placeholder-titre' | t"
+          />
+        </div>
+
+        <button type="button" class="btn-primary w-full" [disabled]="chargement() || !titre.trim()" (click)="ouvrir()">
+          @if (chargement()) {
+            <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+          } @else {
+            <ui-icon name="calendar-plus" class="text-base" />
+          }
+          {{ 'formateur.action' | t }}
+        </button>
+
+        @if (erreur()) {
+          <p class="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-4 text-sm text-danger" role="alert">
+            <ui-icon name="alert" class="mt-0.5 text-base" />
+            {{ erreur() | erreurApi }}
+          </p>
+        }
       </div>
 
-      <button type="button" class="btn-primary w-full" [disabled]="chargement() || !titre.trim()" (click)="ouvrir()">
-        @if (chargement()) {
-          <span class="text-xs">…</span>
+      <div class="mt-8 border-t border-slate-200 pt-6 dark:border-slate-800">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-50">{{ 'formateur.sessions' | t }}</h2>
+          <button type="button" class="btn-secondary !px-2.5 !py-1.5" (click)="chargerSessions()" [attr.aria-label]="'commun.actualiser' | t">
+            <ui-icon name="refresh-cw" class="text-sm" />
+          </button>
+        </div>
+
+        @if (erreurListe()) {
+          <p class="mt-4 flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-3 text-sm text-danger" role="alert">
+            <ui-icon name="alert" class="mt-0.5 text-base" />
+            {{ erreurListe() | erreurApi }}
+          </p>
+        } @else if (sessionsListe().length === 0) {
+          <p class="note mt-4">{{ 'formateur.aucune-session' | t }}</p>
         } @else {
-          <ui-icon name="calendar-plus" class="text-base" />
+          <ul class="mt-4 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+            @for (element of sessionsListe(); track element.id) {
+              <li>
+                <button type="button" class="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-3 text-left hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500 dark:hover:bg-slate-900" (click)="selectionnerSession(element)">
+                  <span class="min-w-0 break-words font-medium text-slate-900 dark:text-slate-100">{{ element.titre }}</span>
+                  <span class="text-sm text-slate-500 dark:text-slate-400">{{ ('statut.' + element.statut) | t }}</span>
+                </button>
+              </li>
+            }
+          </ul>
         }
-        {{ 'formateur.action' | t }}
-      </button>
-
-      @if (erreur()) {
-        <p class="flex items-start gap-2 rounded-lg border border-danger-border bg-danger-soft p-4 text-sm text-danger" role="alert">
-          <ui-icon name="alert" class="mt-0.5 text-base" />
-          {{ 'erreur.defaut' | t }}
-        </p>
-      }
-    </div>
-  } @else {
-    <p class="kicker">{{ 'formateur.kicker' | t }}</p>
-    <h1 class="screen-title">{{ 'formateur.session-ouverte' | t }}</h1>
-    <p class="tagline">{{ 'formateur.code-a-partager' | t }}</p>
-
-    <div class="mt-6 rounded-card border-2 border-brand-200 bg-brand-50 p-6 text-center">
-      <p class="font-mono text-4xl font-bold tracking-[0.3em] text-brand-700">{{ session()!.code }}</p>
-      <p class="mt-3 text-sm text-brand-600">
-        {{ 'formateur.expire-dans' | t }}
-        <span class="font-semibold">{{ minutesRestantes() }}</span>
-        {{ 'formateur.minutes' | t }}
-      </p>
-    </div>
-
-    <p class="note mt-6">
-      <ui-icon name="alert" class="mt-0.5 text-base" />
-      {{ 'formateur.en-attente' | t }}
-    </p>
+      </div>
+    </section>
   }
-</section>
+
+  <app-tableau-suivi />
+</div>

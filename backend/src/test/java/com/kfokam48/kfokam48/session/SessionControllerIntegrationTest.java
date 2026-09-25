@@ -1,6 +1,7 @@
 package com.kfokam48.kfokam48.session;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -143,6 +144,37 @@ class SessionControllerIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("PROMOTION_INCONNUE"))
                 .andExpect(jsonPath("$.message").isString());
+    }
+
+    // --- Liste des sessions (frontend : retrouver ses sessions) ---
+
+    @Test
+    void listeLesSessionsDeLaPromotionAvecTitreEtStatut() throws Exception {
+        mockMvc.perform(post("/api/sessions").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titre\":\"Séance 1\",\"promotionId\":" + promotionId + "}"))
+                .andExpect(status().isCreated());
+        MvcResult seconde = mockMvc.perform(post("/api/sessions").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titre\":\"Séance 2\",\"promotionId\":" + promotionId + "}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        Long idSeconde = objectMapper.readTree(seconde.getResponse().getContentAsString()).get("id").asLong();
+
+        // Horloge figée : même ouvertureAt, l'identifiant départage (plus récente d'abord)
+        mockMvc.perform(get("/api/sessions").param("promotionId", promotionId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(idSeconde))
+                .andExpect(jsonPath("$[0].titre").value("Séance 2"))
+                .andExpect(jsonPath("$[0].code").isString())
+                .andExpect(jsonPath("$[0].statut").value("OUVERTE"))
+                .andExpect(jsonPath("$[1].titre").value("Séance 1"));
+    }
+
+    @Test
+    void listeDesSessionsPromotionInconnueRenvoie404() throws Exception {
+        mockMvc.perform(get("/api/sessions").param("promotionId", "999999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("PROMOTION_INCONNUE"));
     }
 
     // --- EF13/EF15/RG15 : clôture et réouverture manuelles ---

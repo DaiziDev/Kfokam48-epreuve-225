@@ -147,6 +147,18 @@ public class ExerciceService {
                 rendue.map(RelectureEntity::getCommentaire).orElse(null));
     }
 
+    /** « Mes exercices » de l'étudiant — sans note ni relecteur : le détail passe par EF12. */
+    @Transactional(readOnly = true)
+    public List<ExerciceResume> listerParAuteur(Long etudiantId) {
+        if (!etudiants.existsById(etudiantId)) {
+            throw new EtudiantInconnuException(etudiantId);
+        }
+        return exercices.listerParAuteur(etudiantId).stream()
+                .map(e -> new ExerciceResume(e.getId(), e.getSession().getId(), e.getSession().getTitre(),
+                        e.getLien(), e.getStatut()))
+                .toList();
+    }
+
     /**
      * Le lien est ouvert par le relecteur : on n'accepte qu'une URL absolue
      * http(s) avec un hôte — ni texte libre, ni javascript:, ni file:.
@@ -169,6 +181,9 @@ public class ExerciceService {
     }
 
     public record ExerciceEtat(Long id, ExerciceStatut statut) {
+    }
+
+    public record ExerciceResume(Long id, Long sessionId, String sessionTitre, String lien, ExerciceStatut statut) {
     }
 
     /** Aucun champ relecteur, par construction (RG7). */

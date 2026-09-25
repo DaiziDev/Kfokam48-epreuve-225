@@ -102,6 +102,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
+### Frontend — socle (avant les écrans)
+
+**Fait :** analyse du frontend (EF1 et EF2 seuls branchés, relecteur vide, 8 tests de simple création). Socle posé : services + types pour toutes les opérations du contrat ; sélecteur d'identité « Je suis » (+ `GET /api/etudiants`) à la place des `etudiantId: 1` / `promotionId: 1` en dur ; 26 codes d'erreur traduits FR/EN (pipe `erreurApi`). Bugs corrigés : route `**` qui redirigeait vers une route inexistante, erreurs affichées brutes ou génériques. Tests frontend 8 → 24 (conformité de chaque URL au contrat, identité envoyée, erreur traduite de bout en bout avec le vrai intercepteur) ; backend 92/92.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe

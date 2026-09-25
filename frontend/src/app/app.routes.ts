@@ -6,6 +6,7 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
+    pathMatch: 'full',
     loadComponent: () => import('./features/accueil/accueil').then((m) => m.Accueil),
   },
   {
@@ -20,5 +21,6 @@ export const routes: Routes = [
     path: 'formateur',
     loadComponent: () => import('./features/formateur/formateur').then((m) => m.Formateur),
   },
-  { path: '**', redirectTo: 'accueil' },
+  // URL inconnue → accueil (servi sur '', il n'existe pas de route 'accueil')
+  { path: '**', redirectTo: '' },
 ];

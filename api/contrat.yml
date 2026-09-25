@@ -356,6 +356,34 @@ paths:
         "400": { $ref: "#/components/responses/Erreur" }   # CHAMPS_REQUIS (relecteurId absent) | PARAMETRE_INVALIDE
         "404": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU (ajout EF9 ; liste vide si l'étudiant existe sans relecture)
 
+  /api/etudiants:
+    get:
+      summary: Lister les étudiants d'une promotion (sélecteur d'identité du frontend)
+      description: |
+        Sans authentification (Q1), le frontend fait choisir « qui je suis »
+        pour transmettre l'etudiantId que le contrat attend. Ajout additif,
+        décision section 7.
+      parameters:
+        - name: promotionId
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Étudiants de la promotion, triés par nom
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, nom]
+                  properties:
+                    id: { type: integer, format: int64 }
+                    nom: { type: string }
+        "400": { $ref: "#/components/responses/Erreur" }   # CHAMPS_REQUIS | PARAMETRE_INVALIDE
+        "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE
+
   /api/tableau:
     get:
       summary: Le tableau récapitulatif du formateur

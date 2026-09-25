@@ -1,5 +1,7 @@
 package com.kfokam48.kfokam48.exercice;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -42,6 +45,14 @@ public class ExerciceController {
         return new ExerciceResponse(resultat.id(), resultat.statut());
     }
 
+    /** « Mes exercices » : sans cette liste, l'étudiant perd l'id de son exercice après le dépôt (section 7). */
+    @GetMapping
+    public List<ExerciceResumeResponse> lister(@RequestParam("etudiantId") Long etudiantId) {
+        return service.listerParAuteur(etudiantId).stream()
+                .map(e -> new ExerciceResumeResponse(e.id(), e.sessionId(), e.sessionTitre(), e.lien(), e.statut()))
+                .toList();
+    }
+
     /** EF12/RG7 : détail de l'exercice, note et commentaire inclus, jamais le relecteur. */
     @GetMapping("/{id}")
     public ExerciceDetailResponse consulter(@PathVariable("id") Long exerciceId) {
@@ -65,6 +76,11 @@ public class ExerciceController {
 
     /** Réponse 201/200 strictement conforme au contrat : { id, statut }, aucun champ relecteur. */
     public record ExerciceResponse(Long id, ExerciceStatut statut) {
+    }
+
+    /** Ligne de « mes exercices » : aucun champ relecteur (RG7), note via GET /{id}. */
+    public record ExerciceResumeResponse(Long id, Long sessionId, String sessionTitre, String lien,
+            ExerciceStatut statut) {
     }
 
     /**
