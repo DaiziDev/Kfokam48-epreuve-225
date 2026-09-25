@@ -124,7 +124,7 @@ paths:
         "404": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU (ajout EF2, décision section 7)
         "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT | SESSION_CLOTUREE (ajout EF2, décision section 7)
         "410": { $ref: "#/components/responses/Erreur" }   # CODE_EXPIRE — prime sur SESSION_CLOTUREE quand les deux s'appliquent
-        "429": { $ref: "#/components/responses/Erreur" }   # TROP_ECHECS (EF4/RG3 : blocage 2 min après 5 échecs)
+        "429": { $ref: "#/components/responses/Erreur" }   # TROP_ECHECS (EF4/RG3 : blocage 2 min après 5 échecs) — EF4 différée à v1.1 (ticket #23), pas encore renvoyé
 
   /api/sessions/{id}/presences:
     post:
@@ -197,10 +197,12 @@ paths:
     post:
       summary: Un étudiant dépose le lien de son exercice
       description: |
-        Le relecteur est assigné au dépôt, au hasard parmi les présents (EF8, RG6),
-        hors de l'auteur (RG4). S'il n'existe aucun relecteur éligible, le dépôt
-        est refusé en 422 (décision tranchée en section 7). Pour remplacer le lien
-        d'un exercice déjà déposé (EF7, RG12), utilisez PUT /api/exercices/{id}.
+        Deux relecteurs sont assignés au dépôt, au hasard parmi les présents
+        (EF8, RG6), distincts de l'auteur (RG4) et l'un de l'autre (RG5
+        révisé). S'il n'existe pas au moins deux relecteurs éligibles, le
+        dépôt est refusé en 422 (décision tranchée en section 7). Pour
+        remplacer le lien d'un exercice déjà déposé (EF7, RG12), utilisez PUT
+        /api/exercices/{id}.
       requestBody:
         required: true
         content:
@@ -226,7 +228,7 @@ paths:
         "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE (URL http(s) absolue, 2048 car. max) | CHAMPS_REQUIS
         "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE | ETUDIANT_INCONNU (inexistant ou hors promotion, section 7)
         "409": { $ref: "#/components/responses/Erreur" }   # EXERCICE_DEJA_DEPOSE (utilisez PUT) | SESSION_CLOTUREE (RG11)
-        "422": { $ref: "#/components/responses/Erreur" }   # AUCUN_RELECTEUR_DISPONIBLE
+        "422": { $ref: "#/components/responses/Erreur" }   # AUCUN_RELECTEUR_DISPONIBLE (moins de deux pairs présents et distincts)
 
   /api/exercices/{id}:
     put:
@@ -279,13 +281,17 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [id, lien, statut]
+                required: [id, lien, statut, note, noteProvisoire, commentaires]
                 properties:
                   id: { type: integer, format: int64 }
                   lien: { type: string, format: uri }
                   statut: { type: string, enum: [EN_ATTENTE_RELECTURE, RELU] }
-                  note: { type: integer, nullable: true }
-                  commentaire: { type: string, nullable: true }
+                  note: { type: number, nullable: true, description: Note disponible après le premier rendu ; moyenne arithmétique après le second }
+                  noteProvisoire: { type: boolean, description: true si un seul relecteur a rendu }
+                  commentaires:
+                    type: array
+                    description: Commentaires des rendus disponibles, sans identité de relecteur
+                    items: { type: string }
         "400": { $ref: "#/components/responses/Erreur" }   # PARAMETRE_INVALIDE (identifiant non numérique)
         "404": { $ref: "#/components/responses/Erreur" }   # EXERCICE_INCONNU
 
@@ -402,13 +408,14 @@ paths:
                 items:
                   type: object
                   required:
-                    [etudiantId, nom, presences, exercicesDeposes, moyenne, relecturesEnAttente]
+                    [etudiantId, nom, presences, exercicesDeposes, moyenne, moyenneProvisoire, relecturesEnAttente]
                   properties:
                     etudiantId: { type: integer, format: int64 }
                     nom: { type: string }
                     presences: { type: integer }
                     exercicesDeposes: { type: integer }
                     moyenne: { type: number, nullable: true }
+                    moyenneProvisoire: { type: boolean, description: true si une note provisoire entre dans la moyenne }
                     relecturesEnAttente: { type: integer }
         "400": { $ref: "#/components/responses/Erreur" }   # CHAMPS_REQUIS (promotionId absent) | PARAMETRE_INVALIDE
         "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE
