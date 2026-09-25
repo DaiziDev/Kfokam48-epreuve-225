@@ -1,6 +1,7 @@
 package com.kfokam48.kfokam48.exercice;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -21,6 +22,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -187,6 +189,31 @@ class ExerciceControllerIntegrationTest {
                 assertThat(relecteur).isNotEqualTo(auteur).isIn(presents); // RG4, RG6
             }
         }
+    }
+
+    @Test
+    void chaqueExerciceAExactementUnRelecteur() throws Exception {
+        Long sessionId = creerSession();
+        marquerPresents(sessionId, alice, boris, chloe);
+
+        for (Long auteur : List.of(alice, boris, chloe)) {
+            assertThat(relectures.countByExerciceId(deposerEtRetournerId(sessionId, auteur))).isEqualTo(1); // RG5
+        }
+    }
+
+    @Test
+    void laBaseRefuseUnDeuxiemeRelecteurPourLeMemeExercice() throws Exception {
+        // RG5 garanti aussi en base (uq_relecture_exercice), pas seulement par le service
+        Long sessionId = creerSession();
+        marquerPresents(sessionId, alice, boris, chloe);
+        Long exerciceId = deposerEtRetournerId(sessionId, alice);
+
+        RelectureEntity doublon = new RelectureEntity();
+        doublon.setExercice(exercices.getReferenceById(exerciceId));
+        doublon.setRelecteur(etudiants.getReferenceById(chloe));
+
+        assertThatThrownBy(() -> relectures.saveAndFlush(doublon))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
