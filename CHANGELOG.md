@@ -5,6 +5,10 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté — dockerisation
+- `docker compose up --build` lance l'application complète sur http://localhost:8090 : PostgreSQL 17 (volume persistant), API Spring Boot (image JRE 21, utilisateur non-root, migrations Flyway au démarrage) et nginx (SPA Angular + relais `/api` et Swagger UI vers l'API). Démarrage ordonné par contrôles de santé : l'API attend la base, nginx attend l'API. Seul nginx est exposé ; port et identifiants surchargeables par variables d'environnement.
+- README : démarrage Docker ; corrections de l'installation manuelle (API sur le port 8081 et non 8080, frontend SPA et non SSR, chemin du journal).
+
 ### Modifié — analyse du ticket #23 (double relecture)
 - Cahier des charges révisé : RG5 (deux relecteurs distincts, auteur exclu), RG6, RG10, RG12, nouvelle RG16 (note retenue = moyenne des deux rendus, provisoire après un seul) ; EF7, EF8, EF9, EF12, EF16 réécrites ; comportement explicite avec moins de deux relecteurs éligibles (`422 AUCUN_RELECTEUR_DISPONIBLE`). Diagrammes D1, D2, D4 mis à jour.
 - Contrat API révisé : `noteProvisoire` et `commentaires` (anonymes) sur `GET /api/exercices/{id}`, `moyenneProvisoire` sur `GET /api/tableau`.
