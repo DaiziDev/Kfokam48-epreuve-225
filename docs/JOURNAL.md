@@ -62,17 +62,17 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
-### EF6/EF7/EF8 — dépôt, remplacement et assignation du relecteur
+### EF6/EF7/EF8 — dépôt, remplacement et assignation des relecteurs
 
-**Fait :** `POST /api/exercices` (dépôt + tirage du relecteur parmi les présents hors auteur, `422` si personne) et `PUT /api/exercices/{id}` (remplacement par l'auteur tant que la relecture n'est pas rendue, même session clôturée). EF8 embarqué dans le ticket : le contrat et D4 assignent le relecteur au dépôt, un dépôt conforme est impossible sans. Migration V5 (exercice + relecture), paquetages `exercice/` et `relecture/`. 3 tranchages en section 7 (« démarrée » = rendue, `403 NON_AUTEUR`, auteur absent autorisé + définition du lien valide). D2 mis à jour (`verrouillee` retiré, redondant avec `rendueAt`). 18 tests nouveaux, 59/59 verts.
+**Fait :** ancienne implémentation de `POST /api/exercices` (dépôt + assignation d'un pair parmi les présents hors auteur, `422` si aucun) et de `PUT /api/exercices/{id}`. Cette règle a ensuite été remplacée par l'enveloppe du ticket #23 : deux pairs distincts sont désormais requis pour un nouveau dépôt. Migration V5 (exercice + relecture), paquetages `exercice/` et `relecture/`. 18 tests nouveaux, 59/59 verts.
 
 **Bloqué :**
 
 **IA :**
 
-### EF8 — assignation du relecteur (clôture du ticket)
+### EF8 — assignation des relecteurs (historique du ticket)
 
-**Fait :** code livré avec le dépôt (PR #17). Revue critère par critère : présence du relecteur et exclusion de l'auteur déjà testées ; « exactement un relecteur » (RG5) ne l'était pas — 2 tests ajoutés (une relecture par dépôt, doublon refusé par la contrainte en base). Migration de démo renumérotée V4 → V6 (collision de version avec l'index d'auto-clôture, Flyway aurait refusé de démarrer). 61/61 verts.
+**Fait :** ancienne règle du ticket historique : un pair présent, distinct de l'auteur, était assigné au dépôt. Elle est remplacée par l'assignation de deux pairs du ticket #23/#24, avec conservation des relectures historiques lors de V7. Migration de démo renumérotée V4 → V6. 61/61 verts sur l'ancien périmètre.
 
 **Bloqué :**
 
@@ -80,7 +80,7 @@ Chaque entrée répond aux trois mêmes questions :
 
 ### EF9/EF10/EF11 — rendu de la relecture
 
-**Fait :** `POST /api/relectures/{id}` (note 0–20 + commentaire, exercice → `RELU`, note verrouillée) avec `403 AUTO_RELECTURE`, `409 RELECTURE_DEJA_RENDUE`, `400 NOTE_INVALIDE`, et `GET /api/relectures?relecteurId=`. Piège évité : une note déclarée `Integer` laisse Jackson tronquer `12.5` en `12` sans erreur — prouvé en repassant temporairement le champ en `Integer` (test en échec : 200 au lieu de 400), d'où la lecture en `BigDecimal`. Verrou d'écriture (`PESSIMISTIC_WRITE`) contre deux rendus simultanés. Au passage : identifiant non numérique et paramètre absent renvoyaient `500` partout, désormais `400`. 2 tranchages en section 7. 16 tests nouveaux, 77/77 verts.
+**Fait :** ancienne implémentation de `POST /api/relectures/{id}` (note 0–20 + commentaire, exercice → `RELU`, note verrouillée), remplacée par deux rendus individuels : le premier reste provisoire et le second calcule la moyenne finale. Les contrôles `403 AUTO_RELECTURE`, `409 RELECTURE_DEJA_RENDUE`, `400 NOTE_INVALIDE` et le verrou d'écriture restent applicables à chaque relecture.
 
 **Bloqué :**
 
@@ -88,7 +88,7 @@ Chaque entrée répond aux trois mêmes questions :
 
 ### EF12 — consultation de la note sans le relecteur
 
-**Fait :** `GET /api/exercices/{id}` (id, lien, statut, note, commentaire ; note et commentaire nuls avant le rendu). RG7 vérifiée par la liste exacte des champs de la réponse plutôt que par l'absence d'un mot : tout champ ajouté plus tard fait échouer le test. Limite trouvée en vérifiant RG7 : sans authentification (Q1), `GET /api/relectures?relecteurId=` permet de deviner son relecteur en essayant tous les identifiants — documentée en section 7 comme limite v0.1. 6 tests nouveaux, 83/83 verts.
+**Fait :** ancienne réponse de `GET /api/exercices/{id}` avec une seule note et un seul commentaire. Le contrat révisé expose désormais une note provisoire ou la moyenne finale, ainsi que les commentaires rendus sans identité de relecteur. La limite d'anonymat liée à l'absence d'authentification reste documentée en section 7.
 
 **Bloqué :**
 
@@ -96,7 +96,7 @@ Chaque entrée répond aux trois mêmes questions :
 
 ### EF16 — tableau de suivi
 
-**Fait :** `GET /api/tableau?promotionId=` — présences, exercices déposés, moyenne des notes reçues, relectures en attente, par étudiant. 5 requêtes agrégées quel que soit l'effectif (ENF2) ; moyenne calculée en Java depuis somme et nombre (AVG sur entier varie entre H2 et PostgreSQL), arrondie à 2 décimales (ENF3). Test sur scénario déterministe (deux présents par session → tirage du relecteur à issue unique) : chaque chiffre attendu est écrit à l'avance, y compris l'arrondi 13.666… → 13.67 et l'isolation entre promotions. 6 tests nouveaux, 89/89 verts. Backlog Must backend terminé.
+**Fait :** `GET /api/tableau?promotionId=` — présences, exercices déposés, moyenne des notes retenues par exercice, relectures en attente, par étudiant. 5 requêtes agrégées quel que soit l'effectif (ENF2) ; moyenne calculée en Java depuis somme et nombre (AVG sur entier varie entre H2 et PostgreSQL), arrondie à 2 décimales (ENF3). Le score provisoire d'un exercice compte une fois jusqu'au second rendu. Scénario et assertions adaptés au double parcours.
 
 **Bloqué :**
 

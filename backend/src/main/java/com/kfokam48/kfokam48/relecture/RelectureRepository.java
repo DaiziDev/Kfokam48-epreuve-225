@@ -12,10 +12,23 @@ import jakarta.persistence.LockModeType;
 
 public interface RelectureRepository extends JpaRepository<RelectureEntity, Long> {
 
-    Optional<RelectureEntity> findByExerciceId(Long exerciceId);
+    /** Toutes les relectures d'un exercice, de la première à la seconde. */
+    List<RelectureEntity> findByExerciceIdOrderByRangAsc(Long exerciceId);
 
-    /** RG5 : un exercice a exactement un relecteur. */
+    default Optional<RelectureEntity> findByExerciceId(Long exerciceId) {
+        return findByExerciceIdOrderByRangAsc(exerciceId).stream().findFirst();
+    }
+
     long countByExerciceId(Long exerciceId);
+
+    long countByExerciceIdAndRang(Long exerciceId, int rang);
+
+    long countByExercice_SessionId(Long sessionId);
+
+    long countByExerciceIdAndRendueAtIsNotNull(Long exerciceId);
+
+    /** Le même relecteur ne relit qu'une fois le même exercice (uq_relecture_exercice_relecteur). */
+    boolean existsByExerciceIdAndRelecteurId(Long exerciceId, Long relecteurId);
 
     /**
      * EF9/EF11 : verrou d'écriture sur la relecture le temps du rendu. Deux

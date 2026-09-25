@@ -8,5 +8,6 @@ export interface LigneTableau {
   presences: number;
   exercicesDeposes: number;
   moyenne: number | null;
+  moyenneProvisoire: boolean;
   relecturesEnAttente: number;
 }

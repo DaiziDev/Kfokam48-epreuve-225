@@ -84,9 +84,11 @@ class RelectureControllerIntegrationTest {
     private Long alice;
     private Long boris;
     private Long chloe;
+    private Long denis;
     private Long sessionId;
-    /** Exercice d'Alice, relu par Boris (seul autre présent). */
+    /** Exercice d'Alice, relu par Boris et Chloé. */
     private Long exerciceAlice;
+    /** Relecture de rang 1 de l'exercice d'Alice. */
     private Long relectureParBoris;
 
     @BeforeEach
@@ -98,12 +100,17 @@ class RelectureControllerIntegrationTest {
         alice = etudiants.save(etudiant(promotion, "Alice")).getId();
         boris = etudiants.save(etudiant(promotion, "Boris")).getId();
         chloe = etudiants.save(etudiant(promotion, "Chloé")).getId();
+        denis = etudiants.save(etudiant(promotion, "Denis")).getId();
 
         sessionId = creerSession();
         marquerPresent(alice);
         marquerPresent(boris);
+        marquerPresent(chloe);
         exerciceAlice = deposer(alice);
-        relectureParBoris = relectures.findByExerciceId(exerciceAlice).orElseThrow().getId();
+        List<RelectureEntity> relecturesAlice = relectures.findByExerciceIdOrderByRangAsc(exerciceAlice);
+        relectureParBoris = relecturesAlice.stream()
+                .filter(r -> r.getRelecteur().getId().equals(boris))
+                .findFirst().orElseThrow().getId();
     }
 
     private EtudiantEntity etudiant(PromotionEntity promotion, String nom) {
@@ -164,7 +171,7 @@ class RelectureControllerIntegrationTest {
                 .andExpect(jsonPath("$.commentaire").value("Bonne structure, tests à compléter."))
                 .andExpect(jsonPath("$.rendueAt").isString());
 
-        assertThat(statutExercice(exerciceAlice)).isEqualTo(ExerciceStatut.RELU);
+        assertThat(statutExercice(exerciceAlice)).isEqualTo(ExerciceStatut.EN_ATTENTE_RELECTURE);
         RelectureEntity relecture = relectures.findById(relectureParBoris).orElseThrow();
         assertThat(relecture.getNote()).isEqualTo(15);
         assertThat(relecture.getRendueAt()).isEqualTo(MAINTENANT);
@@ -172,11 +179,16 @@ class RelectureControllerIntegrationTest {
 
     @Test
     void lesBornes0Et20SontAcceptees() throws Exception {
-        Long exerciceBoris = deposer(boris); // relu par Alice
-        Long relectureParAlice = relectures.findByExerciceId(exerciceBoris).orElseThrow().getId();
+        Long exerciceBoris = deposer(boris); // relu par Alice et Chloé
+        List<RelectureEntity> relecturesBoris = relectures.findByExerciceIdOrderByRangAsc(exerciceBoris);
+        Long relectureParAlice = relecturesBoris.stream()
+                .filter(r -> r.getRelecteur().getId().equals(alice)).findFirst().orElseThrow().getId();
+        Long relectureParChloe = relecturesBoris.stream()
+                .filter(r -> r.getRelecteur().getId().equals(chloe)).findFirst().orElseThrow().getId();
 
         rendre(relectureParBoris, boris, "0", "Hors sujet.").andExpect(status().isOk());
         rendre(relectureParAlice, alice, "20", "Parfait.").andExpect(status().isOk());
+        rendre(relectureParChloe, chloe, "10", "Correct.").andExpect(status().isOk());
     }
 
     @Test
@@ -199,6 +211,51 @@ class RelectureControllerIntegrationTest {
         // 12.5 n'a pas été tronqué en 12 : rien n'est enregistré
         assertThat(statutExercice(exerciceAlice)).isEqualTo(ExerciceStatut.EN_ATTENTE_RELECTURE);
         assertThat(relectures.findById(relectureParBoris).orElseThrow().getRendueAt()).isNull();
+    }
+
+    // --- Note provisoire et moyenne finale (exigence révisée) ---
+
+    @Test
+    void apresUnSeulRenduLaNoteEstProvisoire() throws Exception {
+        rendre(relectureParBoris, boris, "15", "Premier avis.").andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/exercices/" + exerciceAlice))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statut").value("EN_ATTENTE_RELECTURE"))
+                .andExpect(jsonPath("$.note").value(15))
+                .andExpect(jsonPath("$.noteProvisoire").value(true));
+    }
+
+    @Test
+    void apresDeuxRendusLaMoyenneEstLaNoteFinale() throws Exception {
+        // Relecture de rang 2 de l'exercice d'Alice, portée par l'autre relecteur
+        Long relectureDeux = relectures.findByExerciceIdOrderByRangAsc(exerciceAlice).stream()
+                .filter(r -> !r.getRelecteur().getId().equals(boris)).findFirst().orElseThrow().getId();
+        Long secondRelecteur = relectures.findById(relectureDeux).orElseThrow().getRelecteur().getId();
+
+        rendre(relectureParBoris, boris, "12", "Premier avis.").andExpect(status().isOk());
+        rendre(relectureDeux, secondRelecteur, "15", "Second avis.").andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/exercices/" + exerciceAlice))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statut").value("RELU"))
+                .andExpect(jsonPath("$.note").value(13.5))
+                .andExpect(jsonPath("$.noteProvisoire").value(false));
+    }
+
+    @Test
+    void laMoyenneEntiereEstExposeeSansDecimale() throws Exception {
+        Long relectureDeux = relectures.findByExerciceIdOrderByRangAsc(exerciceAlice).stream()
+                .filter(r -> !r.getRelecteur().getId().equals(boris)).findFirst().orElseThrow().getId();
+        Long secondRelecteur = relectures.findById(relectureDeux).orElseThrow().getRelecteur().getId();
+
+        rendre(relectureParBoris, boris, "10", "Premier avis.").andExpect(status().isOk());
+        rendre(relectureDeux, secondRelecteur, "16", "Second avis.").andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/exercices/" + exerciceAlice))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.note").value(13))
+                .andExpect(jsonPath("$.noteProvisoire").value(false));
     }
 
     @Test
@@ -235,7 +292,8 @@ class RelectureControllerIntegrationTest {
 
     @Test
     void unEtudiantNonAssigneNePeutPasRendreLaRelecture() throws Exception {
-        rendre(relectureParBoris, chloe, "10", "Je ne suis pas le relecteur.")
+        // Denis est absent de la session : il ne peut jamais être relecteur
+        rendre(relectureParBoris, denis, "10", "Je ne suis pas le relecteur.")
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("RELECTEUR_NON_ASSIGNE"));
     }
@@ -313,7 +371,8 @@ class RelectureControllerIntegrationTest {
 
     @Test
     void unEtudiantSansRelectureRecoitUneListeVide() throws Exception {
-        mockMvc.perform(get("/api/relectures").param("relecteurId", chloe.toString()))
+        // Denis, absent de la session, ne peut porter aucune relecture
+        mockMvc.perform(get("/api/relectures").param("relecteurId", denis.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
