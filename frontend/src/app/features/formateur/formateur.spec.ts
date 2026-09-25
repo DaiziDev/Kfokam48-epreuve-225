@@ -14,10 +14,10 @@ describe('Formateur', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('affiche le titre de l espace formateur', () => {
+  it('affiche le titre de l écran formateur', () => {
     const fixture = TestBed.createComponent(Formateur);
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('h1')?.textContent).toContain('Espace formateur');
+    expect(element.querySelector('h1')?.textContent).toContain('Ouvrez une session');
   });
 });

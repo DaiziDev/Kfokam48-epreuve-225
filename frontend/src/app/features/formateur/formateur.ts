@@ -1,18 +1,26 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TPipe } from '../../ui/i18n/t.pipe';
+import { UiIcon } from '../../ui/icon/ui-icon';
 
+/**
+ * Écran formateur — la création de session (EF1, via SessionsApiService) et le
+ * tableau de suivi (EF16) s'y brancheront.
+ */
 @Component({
   selector: 'app-formateur',
-  imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TPipe, UiIcon],
   template: `
-    <main class="mx-auto max-w-3xl px-4 py-8">
-      <h1 class="text-2xl font-semibold text-slate-900">Espace formateur</h1>
-      <p class="mt-2 text-slate-600">
-        Ouvrir une session, partager le code, suivre la promotion.
+    <section class="card p-6">
+      <p class="kicker">{{ 'formateur.kicker' | t }}</p>
+      <h1 class="screen-title">{{ 'formateur.titre' | t }}</h1>
+      <p class="tagline">{{ 'formateur.tagline' | t }}</p>
+
+      <p class="note mt-6">
+        <ui-icon name="alert" class="text-base" />
+        {{ 'formateur.en-attente' | t }}
       </p>
-      <p class="mt-6 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
-        Écran en attente des tickets EF1 (bouton ouvrir une session) et EF16 (tableau de suivi).
-      </p>
-    </main>
+    </section>
   `,
 })
 export class Formateur {}
