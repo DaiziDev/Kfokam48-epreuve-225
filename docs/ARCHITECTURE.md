@@ -31,8 +31,8 @@ Controller (DTO validés) → Service (règles métier) → Repository (JPA) →
   → toutes les erreurs au format imposé `{ code, message }`, y compris JSON malformé
   (400 `CORPS_INVALIDE` au lieu du 500 par défaut).
 - **`Clock` injectable** (`conf/HorlogeConfiguration`) : RG1 (+15 min), puis RG3
-  (blocage 2 min, EF4 différée à v1.1 par le ticket #23) et RG14 (auto-clôture 24h)
-  calculent le temps via ce bean — testables par horloge figée.
+  (blocage 2 min) calculent le temps via ce bean — testables par horloge figée.
+  RG14 (auto-clôture) est reportée à v1.1 par le ticket #23.
 
 ### Organisation des paquetages
 
@@ -62,10 +62,8 @@ Les présences sont restées dans `session/` (fortement liées au code de sessio
 
 ### Tâches planifiées
 
-- **Auto-clôture (RG14)** : `session/AutoClotureTache` appelle chaque minute
-  `SessionService.cloturerSessionsEchues()`. La règle reste dans le service (testable par
-  horloge déplaçable) ; la tâche ne fait que la déclencher. Livrée en v0.1, conservée
-  après la repriorisation #23 (c'est EF4 qui a été reportée).
+- **Auto-clôture (RG14)** : code conservé de v0.1, mais fonction différée à v1.1
+  par la repriorisation #23 ; elle ne fait pas partie du périmètre livré avec la double relecture.
 
 ## Frontend
 
