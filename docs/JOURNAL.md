@@ -70,6 +70,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
+### EF8 — assignation du relecteur (clôture du ticket)
+
+**Fait :** code livré avec le dépôt (PR #17). Revue critère par critère : présence du relecteur et exclusion de l'auteur déjà testées ; « exactement un relecteur » (RG5) ne l'était pas — 2 tests ajoutés (une relecture par dépôt, doublon refusé par la contrainte en base). Migration de démo renumérotée V4 → V6 (collision de version avec l'index d'auto-clôture, Flyway aurait refusé de démarrer). 61/61 verts.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe

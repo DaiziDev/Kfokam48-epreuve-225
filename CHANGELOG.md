@@ -7,6 +7,8 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 - **Design system frontend** (benchmark documenté dans `docs/DESIGN.md`) : tokens Tailwind 4 (`@theme`) — indigo de marque, statuts sémantiques emerald/amber/red, typo Inter + mono ; composants `ui-icon` (SVG Lucide inlinés, zéro emoji, zéro dépendance), `ui-badge-statut`, `ui-code-input` (6 cases, collage, navigation clavier, CVA) ; i18n FR/EN par signals avec bascule instantanée.
+- **EF8 (Must)** — critères d'acceptation vérifiés un à un : RG5 (exactement un relecteur par exercice) désormais testé, y compris le refus en base d'un second relecteur (`uq_relecture_exercice`). Assignation livrée avec le dépôt (voir EF6/EF8 ci-dessous).
+- Migration `V6__etudiants_demo.sql` : trois étudiants de démonstration dans la promotion KFOKAM48 (ENF2).
 - **EF6/EF8 (Must)** — `POST /api/exercices` : l'étudiant dépose le lien de son exercice (201, statut `EN_ATTENTE_RELECTURE`) ; un relecteur est tiré au hasard parmi les présents de la session, auteur exclu (RG4, RG5, RG6), jamais exposé dans la réponse. `422 AUCUN_RELECTEUR_DISPONIBLE` s'il n'y a aucun autre présent ; `409 EXERCICE_DEJA_DEPOSE` ; `409 SESSION_CLOTUREE` (RG11) ; `404 SESSION_INCONNUE` / `ETUDIANT_INCONNU` ; `400 LIEN_INVALIDE` (URL http(s) absolue exigée).
 - **EF7 (Must)** — `PUT /api/exercices/{id}` : l'auteur remplace son lien tant que la relecture n'est pas rendue, même après clôture de la session (RG12) ; relecteur inchangé. `409 RELECTURE_DEJA_COMMENCEE` ; `403 NON_AUTEUR` (ajout au contrat, section 7) ; `404 EXERCICE_INCONNU`.
 - Migration `V5__exercices_et_relectures.sql` : tables `exercice` (unicité session + étudiant) et `relecture` (unicité par exercice pour RG5, note contrainte à 0–20 pour RG8).
