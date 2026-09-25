@@ -114,7 +114,7 @@ Chaque entrée répond aux trois mêmes questions :
 
 ## Étape 3 — Enveloppe
 
-**Fait :** ticket #23 ouvert avant le développement. Analyse mise à jour et commit de conséquence `cd09f0b`. Découpage proposé en trois sous-issues : migration et conservation des données ; assignation/rendu des deux pairs ; contrat API et interfaces. Le propriétaire du dépôt ouvre ces sous-issues GitHub. Sacrifice initialement inscrit sur EF14 (auto-clôture), puis corrigé : EF14 était déjà livrée et testée en v0.1, la reporter ne libérait rien et laissait un code actif contredisant le cahier des charges. Le sacrifice porte sur EF4 (voir ci-dessous).
+**Fait :** ticket #23 ouvert avant le développement. Analyse mise à jour et commit de conséquence `b791fc5`. Découpage proposé en trois sous-issues : migration et conservation des données ; assignation/rendu des deux pairs ; contrat API et interfaces. Le propriétaire du dépôt ouvre ces sous-issues GitHub. Sacrifice initialement inscrit sur EF14 (auto-clôture), puis corrigé : EF14 était déjà livrée et testée en v0.1, la reporter ne libérait rien et laissait un code actif contredisant le cahier des charges. Le sacrifice porte sur EF4 (voir ci-dessous).
 
 **Bloqué :** un autre éditeur a réécrit certains fichiers backend en parallèle, réintroduisant la règle « RELU au premier rendu ». Le travail de stabilisation continue après coordination.
 

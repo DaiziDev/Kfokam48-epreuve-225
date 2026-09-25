@@ -51,6 +51,7 @@ export class SessionDetail {
 
   /** Horloge d'affichage, rafraîchie chaque seconde et arrêtée en quittant l'écran. */
   private readonly maintenant = signal(Date.now());
+  private presenceEnCours = false;
 
   readonly minutesRestantes = computed(() => {
     const restant = new Date(this.session().expirationAt).getTime() - this.maintenant();
@@ -67,7 +68,16 @@ export class SessionDetail {
 
   constructor() {
     const minuterie = setInterval(() => this.maintenant.set(Date.now()), 1000);
-    inject(DestroyRef).onDestroy(() => clearInterval(minuterie));
+    // Les élèves pointent indépendamment : garder la liste formateur à jour sans action manuelle.
+    const actualisationPresences = setInterval(() => {
+      if (this.estOuverte()) {
+        this.chargerPresences();
+      }
+    }, 5000);
+    inject(DestroyRef).onDestroy(() => {
+      clearInterval(minuterie);
+      clearInterval(actualisationPresences);
+    });
 
     this.etudiantsApi.lister(this.promotionId).subscribe({
       next: (etudiants) => this.etudiants.set(etudiants),
@@ -84,9 +94,21 @@ export class SessionDetail {
   }
 
   chargerPresences(sessionId = this.session().id): void {
+    if (this.presenceEnCours) {
+      return;
+    }
+    this.presenceEnCours = true;
     this.sessions.listerPresences(sessionId).subscribe({
-      next: (presences) => this.presences.set(presences),
-      error: (erreur: ApiError) => this.erreur.set(erreur),
+      next: (presences) => {
+        this.presenceEnCours = false;
+        if (sessionId === this.session().id) {
+          this.presences.set(presences);
+        }
+      },
+      error: (erreur: ApiError) => {
+        this.presenceEnCours = false;
+        this.erreur.set(erreur);
+      },
     });
   }
 

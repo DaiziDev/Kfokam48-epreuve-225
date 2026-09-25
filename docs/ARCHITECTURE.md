@@ -112,6 +112,23 @@ npm run build    # bundle statique
 Le proxy de développement (`proxy.conf.json`) pointe vers le backend ; en production,
 l'app statique est servie derrière la même origine que l'API.
 
+## Déploiement (Docker)
+
+```
+navigateur ──► frontend (nginx :80, exposé en 8090) ──/api──► backend (:8081) ──► db (PostgreSQL)
+```
+
+- **Même origine qu'en développement** : nginx sert la SPA et relaie `/api` au backend,
+  exactement comme `proxy.conf.json` — aucune URL d'API à changer selon l'environnement,
+  aucun CORS à configurer.
+- **Images en deux étapes** : on compile avec le JDK / Node, on exécute avec le JRE / nginx
+  seuls. Le backend tourne sous un utilisateur non-root.
+- **Configuration par l'environnement** : `SPRING_DATASOURCE_*` remplacent les valeurs de
+  `application.properties` ; aucun profil Spring dédié à Docker.
+- **Démarrage ordonné** : l'API attend que PostgreSQL accepte les connexions, nginx attend
+  que l'API réponde (migrations Flyway terminées).
+- **Surface minimale** : seul nginx publie un port ; base et API restent sur le réseau interne.
+
 ## Décisions rejetées (et pourquoi)
 
 | Alternative | Raison du rejet |

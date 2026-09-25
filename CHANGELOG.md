@@ -5,9 +5,14 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
-### Modifié — ticket #23
-- Chaque nouvel exercice est attribué à deux pairs distincts. La première note est provisoire ; la seconde rendue fixe la moyenne finale. Le détail étudiant expose les commentaires anonymisés et le tableau signale les moyennes provisoires.
-- Migration V7 ajoute le second rang de relecture en préservant les notes déjà rendues ; le blocage après 5 codes erronés (EF4, Should, non développé) est reporté à v1.1 pour absorber ce Must tardif ; l'auto-clôture (EF14), déjà livrée en v0.1, reste en place.
+### Ajouté — dockerisation
+- `docker compose up --build` lance l'application complète sur http://localhost:8090 : PostgreSQL 17 (volume persistant), API Spring Boot (image JRE 21, utilisateur non-root, migrations Flyway au démarrage) et nginx (SPA Angular + relais `/api` et Swagger UI vers l'API). Démarrage ordonné par contrôles de santé : l'API attend la base, nginx attend l'API. Seul nginx est exposé ; port et identifiants surchargeables par variables d'environnement.
+- README : démarrage Docker ; corrections de l'installation manuelle (API sur le port 8081 et non 8080, frontend SPA et non SSR, chemin du journal).
+
+### Modifié — analyse du ticket #23 (double relecture)
+- Cahier des charges révisé : RG5 (deux relecteurs distincts, auteur exclu), RG6, RG10, RG12, nouvelle RG16 (note retenue = moyenne des deux rendus, provisoire après un seul) ; EF7, EF8, EF9, EF12, EF16 réécrites ; comportement explicite avec moins de deux relecteurs éligibles (`422 AUCUN_RELECTEUR_DISPONIBLE`). Diagrammes D1, D2, D4 mis à jour.
+- Contrat API révisé : `noteProvisoire` et `commentaires` (anonymes) sur `GET /api/exercices/{id}`, `moyenneProvisoire` sur `GET /api/tableau`.
+- Périmètre : EF4 (blocage après 5 codes erronés, Should, non développée) est reportée à v1.1 pour absorber ce Must tardif ; EF14 (auto-clôture), déjà livrée en v0.1, reste en place.
 
 ### Ajouté
 - **Design system frontend** (benchmark documenté dans `docs/DESIGN.md`) : tokens Tailwind 4 (`@theme`) — indigo de marque, statuts sémantiques emerald/amber/red, typo Inter + mono ; composants `ui-icon` (SVG Lucide inlinés, zéro emoji, zéro dépendance), `ui-badge-statut`, `ui-code-input` (6 cases, collage, navigation clavier, CVA) ; i18n FR/EN par signals avec bascule instantanée.

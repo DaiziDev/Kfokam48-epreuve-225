@@ -41,7 +41,9 @@ public class PresenceService {
 
         // 1. Le code mène à une session (400) — normalisation : saisie manuelle
         String code = normaliser(codeBrut);
-        SessionEntity session = sessions.findByCode(code)
+        // Le verrou de session ferme la fenêtre entre la vérification du doublon
+        // et l'insertion quand deux étudiants pointent simultanément.
+        SessionEntity session = sessions.verrouillerParCode(code)
                 .orElseThrow(() -> new CodeInconnuException(code));
 
         // 2. Le code n'est pas expiré (410, RG1) — prime sur la clôture
