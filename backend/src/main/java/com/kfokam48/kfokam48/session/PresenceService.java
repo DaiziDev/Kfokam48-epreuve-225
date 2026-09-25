@@ -2,6 +2,7 @@ package com.kfokam48.kfokam48.session;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Locale;
 
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Logique métier EF2/EF3 : l'étudiant marque sa présence avec le code éphémère.
+ * EF5/RG13 : le formateur ajoute une présence manuelle, marquée source = FORMATEUR.
  * L'ordre des vérifications suit le diagramme de séquence D3, avec une règle de
  * priorité tranchée en section 7 : un code expiré prime sur une session clôturée
  * (c'est la cause racine vue par l'étudiant).
@@ -58,14 +60,60 @@ public class PresenceService {
         }
 
         // 5. Cas nominal : présence créée avec source = ETUDIANT (EF2)
+        return creer(session, etudiant, PresenceSource.ETUDIANT);
+    }
+
+    /**
+     * EF5/RG13 : le formateur ajoute la présence d'un étudiant qui n'a pas pu
+     * saisir le code. Pas de contrôle d'expiration : RG1 ne vise que le code
+     * (section 7) — seul l'état OUVERTE de la session compte.
+     */
+    @Transactional
+    public PresenceCreee ajouterParFormateur(Long sessionId, Long etudiantId) {
+        // 1. La session existe (404)
+        SessionEntity session = sessions.findById(sessionId)
+                .orElseThrow(() -> new SessionInconnueException(sessionId));
+
+        // 2. L'étudiant existe et appartient à la promotion de la session (404, section 7)
+        EtudiantEntity etudiant = etudiants.findById(etudiantId)
+                .filter(e -> e.getPromotion().getId().equals(session.getPromotion().getId()))
+                .orElseThrow(() -> new EtudiantInconnuException(etudiantId));
+
+        // 3. La session est encore ouverte (409)
+        if (session.getStatut() == SessionStatut.CLOTUREE) {
+            throw new SessionClotureeException();
+        }
+
+        // 4. Pas de double présence, quelle que soit la source de la première (409)
+        if (presences.existsBySessionIdAndEtudiantId(sessionId, etudiantId)) {
+            throw new DejaPresentException();
+        }
+
+        // 5. Cas nominal : présence créée avec source = FORMATEUR (RG13)
+        return creer(session, etudiant, PresenceSource.FORMATEUR);
+    }
+
+    /** EF5 : les présents d'une session, chacun avec sa source pour les distinguer. */
+    @Transactional(readOnly = true)
+    public List<PresenceListee> listerParSession(Long sessionId) {
+        if (!sessions.existsById(sessionId)) {
+            throw new SessionInconnueException(sessionId);
+        }
+        return presences.listerParSession(sessionId).stream()
+                .map(p -> new PresenceListee(p.getId(), p.getEtudiant().getId(), p.getEtudiant().getNom(),
+                        p.getSource(), p.getMarqueeAt()))
+                .toList();
+    }
+
+    private PresenceCreee creer(SessionEntity session, EtudiantEntity etudiant, PresenceSource source) {
         PresenceEntity presence = new PresenceEntity();
         presence.setSession(session);
         presence.setEtudiant(etudiant);
-        presence.setSource(PresenceSource.ETUDIANT);
+        presence.setSource(source);
         presence.setMarqueeAt(horloge.instant());
         presences.save(presence);
 
-        return new PresenceCreee(presence.getId(), session.getId(), etudiantId, presence.getSource());
+        return new PresenceCreee(presence.getId(), session.getId(), etudiant.getId(), presence.getSource());
     }
 
     /**
@@ -81,5 +129,9 @@ public class PresenceService {
     }
 
     public record PresenceCreee(Long id, Long sessionId, Long etudiantId, PresenceSource source) {
+    }
+
+    public record PresenceListee(Long id, Long etudiantId, String nom, PresenceSource source,
+            Instant marqueeAt) {
     }
 }

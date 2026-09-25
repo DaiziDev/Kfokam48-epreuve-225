@@ -16,6 +16,9 @@ import com.kfokam48.kfokam48.session.DejaPresentException;
 import com.kfokam48.kfokam48.session.EtudiantInconnuException;
 import com.kfokam48.kfokam48.session.PromotionInconnueException;
 import com.kfokam48.kfokam48.session.SessionClotureeException;
+import com.kfokam48.kfokam48.session.SessionDejaClotureeException;
+import com.kfokam48.kfokam48.session.SessionDejaOuverteException;
+import com.kfokam48.kfokam48.session.SessionInconnueException;
 
 /**
  * Gestion centralisée des erreurs : TOUTES les réponses d'erreur respectent le
@@ -53,6 +56,13 @@ public class GestionErreursAdvice {
                 .body(new CorpsErreur("PROMOTION_INCONNUE", exception.getMessage()));
     }
 
+    /** Identifiant de session inexistant → 404 SESSION_INCONNUE (EF5, contrat). */
+    @ExceptionHandler(SessionInconnueException.class)
+    public ResponseEntity<CorpsErreur> sessionInconnue(SessionInconnueException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new CorpsErreur("SESSION_INCONNUE", exception.getMessage()));
+    }
+
     /** etudiantId inexistant → 404 ETUDIANT_INCONNU (décision section 7). */
     @ExceptionHandler(EtudiantInconnuException.class)
     public ResponseEntity<CorpsErreur> etudiantInconnu(EtudiantInconnuException exception) {
@@ -79,6 +89,20 @@ public class GestionErreursAdvice {
     public ResponseEntity<CorpsErreur> sessionCloturee(SessionClotureeException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new CorpsErreur("SESSION_CLOTUREE", exception.getMessage()));
+    }
+
+    /** Clôture d'une session déjà clôturée → 409 SESSION_DEJA_CLOTUREE (EF13). */
+    @ExceptionHandler(SessionDejaClotureeException.class)
+    public ResponseEntity<CorpsErreur> sessionDejaCloturee(SessionDejaClotureeException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CorpsErreur("SESSION_DEJA_CLOTUREE", exception.getMessage()));
+    }
+
+    /** Réouverture d'une session déjà ouverte → 409 SESSION_DEJA_OUVERTE (EF15). */
+    @ExceptionHandler(SessionDejaOuverteException.class)
+    public ResponseEntity<CorpsErreur> sessionDejaOuverte(SessionDejaOuverteException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CorpsErreur("SESSION_DEJA_OUVERTE", exception.getMessage()));
     }
 
     /** Déjà pointé à cette session → 409 DEJA_PRESENT (EF3). */

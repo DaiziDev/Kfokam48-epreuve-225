@@ -9,7 +9,8 @@ info:
     dans ce même fichier, sous /api, avant ton premier commit de code.
 
     Complétion (décisions tranchées en section 7 du cahier des charges) :
-    endpoints ajoutés — présence manuelle du formateur, remplacement et
+    endpoints ajoutés — présence manuelle du formateur et liste des présents
+    d'une session, remplacement et
     consultation d'exercice, liste des relectures d'un relecteur — plus les
     codes 429/422 et le champ relecteurId exigés par EF4, EF5, EF7, EF8,
     EF10 et EF12.
@@ -159,8 +160,38 @@ paths:
                   sessionId: { type: integer, format: int64 }
                   etudiantId: { type: integer, format: int64 }
                   source: { type: string, enum: [ETUDIANT, FORMATEUR] }
-        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE | ETUDIANT_INCONNU
+        "400": { $ref: "#/components/responses/Erreur" }   # CHAMPS_REQUIS
+        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE | ETUDIANT_INCONNU (inexistant ou hors de la promotion de la session, section 7)
         "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT | SESSION_CLOTUREE
+    get:
+      summary: Lister les présents d'une session, source incluse (EF5, RG13)
+      description: |
+        Rend vérifiable le critère d'EF5 « apparaît comme telle » : chaque
+        présence porte sa source, l'écran formateur distingue les ajouts
+        manuels (FORMATEUR) des saisies de code (ETUDIANT). Tri par heure de
+        marquage — ajout additif, décision section 7.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Présents de la session
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, etudiantId, nom, source, marqueeAt]
+                  properties:
+                    id: { type: integer, format: int64 }
+                    etudiantId: { type: integer, format: int64 }
+                    nom: { type: string }
+                    source: { type: string, enum: [ETUDIANT, FORMATEUR] }
+                    marqueeAt: { type: string, format: date-time }
+        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE
 
   /api/exercices:
     post:
