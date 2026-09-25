@@ -38,6 +38,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :** a proposé l'ordre des vérifications (étudiant → code → clôturée → déjà présent), la priorité 410 > 409 et la normalisation du code. Vérifié en écrivant d'abord les tests qui encodent mes critères d'acceptation, en constatant moi-même les 2 échecs d'horloge, et en validant le fix par la relecture du mécanisme d'injection Spring (bean singleton).
 
+### EF5 — présence ajoutée par le formateur
+
+**Fait :** `POST /api/sessions/{id}/presences` — présence créée avec `source = FORMATEUR` (RG13), sans contrôle d'expiration du code, refusée si session inconnue (404), étudiant inconnu ou hors promotion (404), déjà présent (409, quelle que soit la source) ou session clôturée (409). Ajout de `GET /api/sessions/{id}/presences` pour rendre la source visible (critère « apparaît comme telle »). 2 tranchages nouveaux en section 7. 11 tests d'intégration nouveaux, 26/26 verts.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe

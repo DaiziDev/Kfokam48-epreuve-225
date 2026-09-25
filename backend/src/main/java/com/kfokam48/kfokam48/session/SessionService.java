@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Logique métier EF1 : ouverture de session avec code de présence éphémère.
  * RG1 : expiration = ouverture + 15 minutes, calculée depuis le Clock injecté.
+ * EF13/EF15 : clôture et réouverture manuelles (RG15).
  */
 @Service
 public class SessionService {
@@ -57,6 +58,37 @@ public class SessionService {
                 session.getOuvertureAt(), session.getExpirationAt(), session.getStatut());
     }
 
+    /** EF13/RG15 : le formateur clôture une session OUVERTE, à tout moment. */
+    @Transactional
+    public SessionStatutChange cloturer(Long sessionId) {
+        SessionEntity session = trouver(sessionId);
+        if (session.getStatut() == SessionStatut.CLOTUREE) {
+            throw new SessionDejaClotureeException();
+        }
+        session.setStatut(SessionStatut.CLOTUREE);
+        return new SessionStatutChange(session.getId(), session.getStatut());
+    }
+
+    /**
+     * EF15/RG15 : le formateur rouvre une session clôturée par erreur.
+     * expirationAt n'est pas touché : l'auto-clôture à 24h (RG14) reste
+     * calculée depuis la date d'origine, et le code expiré le reste.
+     */
+    @Transactional
+    public SessionStatutChange rouvrir(Long sessionId) {
+        SessionEntity session = trouver(sessionId);
+        if (session.getStatut() == SessionStatut.OUVERTE) {
+            throw new SessionDejaOuverteException();
+        }
+        session.setStatut(SessionStatut.OUVERTE);
+        return new SessionStatutChange(session.getId(), session.getStatut());
+    }
+
+    private SessionEntity trouver(Long sessionId) {
+        return sessions.findById(sessionId)
+                .orElseThrow(() -> new SessionInconnueException(sessionId));
+    }
+
     /**
      * Génération avec retry : la contrainte d'unicité en base reste l'arbitre final,
      * existsByCode réduit la probabilité de collision au bruit résiduel.
@@ -82,5 +114,8 @@ public class SessionService {
 
     public record SessionCreee(Long id, String code, Instant ouvertureAt,
             Instant expirationAt, SessionStatut statut) {
+    }
+
+    public record SessionStatutChange(Long id, SessionStatut statut) {
     }
 }

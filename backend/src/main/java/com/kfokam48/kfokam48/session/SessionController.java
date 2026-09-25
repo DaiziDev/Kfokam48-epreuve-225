@@ -2,6 +2,8 @@ package com.kfokam48.kfokam48.session;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,5 +27,23 @@ public class SessionController {
         SessionCreeeResponse reponse = new SessionCreeeResponse(resultat.id(), resultat.code(),
                 resultat.ouvertureAt(), resultat.expirationAt(), resultat.statut());
         return ResponseEntity.status(HttpStatus.CREATED).body(reponse);
+    }
+
+    /** EF13 : clôture manuelle d'une session OUVERTE. */
+    @PatchMapping("/{id}/cloture")
+    public StatutSessionResponse cloturer(@PathVariable("id") Long sessionId) {
+        SessionService.SessionStatutChange resultat = service.cloturer(sessionId);
+        return new StatutSessionResponse(resultat.id(), resultat.statut());
+    }
+
+    /** EF15 : réouverture d'une session clôturée par erreur, expirationAt inchangé. */
+    @PatchMapping("/{id}/reouverture")
+    public StatutSessionResponse rouvrir(@PathVariable("id") Long sessionId) {
+        SessionService.SessionStatutChange resultat = service.rouvrir(sessionId);
+        return new StatutSessionResponse(resultat.id(), resultat.statut());
+    }
+
+    /** Réponse 200 de clôture et réouverture, strictement conforme au contrat : { id, statut }. */
+    public record StatutSessionResponse(Long id, SessionStatut statut) {
     }
 }
