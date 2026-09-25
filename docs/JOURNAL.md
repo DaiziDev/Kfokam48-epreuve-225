@@ -78,6 +78,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
+### EF9/EF10/EF11 — rendu de la relecture
+
+**Fait :** `POST /api/relectures/{id}` (note 0–20 + commentaire, exercice → `RELU`, note verrouillée) avec `403 AUTO_RELECTURE`, `409 RELECTURE_DEJA_RENDUE`, `400 NOTE_INVALIDE`, et `GET /api/relectures?relecteurId=`. Piège évité : une note déclarée `Integer` laisse Jackson tronquer `12.5` en `12` sans erreur — prouvé en repassant temporairement le champ en `Integer` (test en échec : 200 au lieu de 400), d'où la lecture en `BigDecimal`. Verrou d'écriture (`PESSIMISTIC_WRITE`) contre deux rendus simultanés. Au passage : identifiant non numérique et paramètre absent renvoyaient `500` partout, désormais `400`. 2 tranchages en section 7. 16 tests nouveaux, 77/77 verts.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe
