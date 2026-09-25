@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,38 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 class PresenceControllerIntegrationTest {
 
     private static final Instant T0 = Instant.parse("2026-09-25T10:00:00Z");
-
-    /**
-     * Horloge mutable : le bean est créé UNE fois et injecté dans les services,
-     * c'est donc l'instance elle-même qui doit pouvoir bouger (remplacer le champ
-     * ne suffirait pas — les services garderaient l'ancien objet).
-     */
-    static class HorlogeMutable extends Clock {
-        private volatile Instant instant;
-
-        HorlogeMutable(Instant initial) {
-            this.instant = initial;
-        }
-
-        void avancerA(Instant nouvelInstant) {
-            this.instant = nouvelInstant;
-        }
-
-        @Override
-        public java.time.ZoneId getZone() {
-            return ZoneOffset.UTC;
-        }
-
-        @Override
-        public Clock withZone(java.time.ZoneId zone) {
-            return this;
-        }
-
-        @Override
-        public Instant instant() {
-            return instant;
-        }
-    }
 
     @TestConfiguration
     static class HorlogeDeTest {
