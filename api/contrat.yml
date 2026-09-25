@@ -382,6 +382,7 @@ paths:
                     exercicesDeposes: { type: integer }
                     moyenne: { type: number, nullable: true }
                     relecturesEnAttente: { type: integer }
+        "400": { $ref: "#/components/responses/Erreur" }   # CHAMPS_REQUIS (promotionId absent) | PARAMETRE_INVALIDE
         "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE
 
 components:

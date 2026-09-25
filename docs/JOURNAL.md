@@ -94,6 +94,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
+### EF16 — tableau de suivi
+
+**Fait :** `GET /api/tableau?promotionId=` — présences, exercices déposés, moyenne des notes reçues, relectures en attente, par étudiant. 5 requêtes agrégées quel que soit l'effectif (ENF2) ; moyenne calculée en Java depuis somme et nombre (AVG sur entier varie entre H2 et PostgreSQL), arrondie à 2 décimales (ENF3). Test sur scénario déterministe (deux présents par session → tirage du relecteur à issue unique) : chaque chiffre attendu est écrit à l'avance, y compris l'arrondi 13.666… → 13.67 et l'isolation entre promotions. 6 tests nouveaux, 89/89 verts. Backlog Must backend terminé.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe

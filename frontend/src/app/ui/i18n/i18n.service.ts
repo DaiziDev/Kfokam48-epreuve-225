@@ -56,6 +56,7 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'nav.relecteur': 'Relecteur',
     'nav.formateur': 'Formateur',
     'nav.langue': 'Changer de langue',
+    'nav.theme': 'Basculer entre thème clair et sombre',
 
     'etudiant.kicker': 'Espace étudiant',
     'etudiant.titre': 'Marquez votre présence',
@@ -145,6 +146,7 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
     'nav.relecteur': 'Reviewer',
     'nav.formateur': 'Instructor',
     'nav.langue': 'Switch language',
+    'nav.theme': 'Toggle between light and dark theme',
 
     'etudiant.kicker': 'Student area',
     'etudiant.titre': 'Check in to your session',

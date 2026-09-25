@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Variante dark : classe .dark sur <html> (ThemeService), pas de media query
+   — l'utilisateur choisit dans l'app, l'OS ne propose que la valeur initiale. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * Design system KFOKAM48 — tokens (voir docs/DESIGN.md)
  * Palette : indigo curaté (primaire), slate (neutres), sémantiques statut.
@@ -95,26 +99,44 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
-    @apply bg-slate-50 font-sans text-slate-900 antialiased;
+    @apply bg-slate-50 font-sans text-slate-900 antialiased transition-colors;
+  }
+
+  html.dark body {
+    @apply bg-slate-950 text-slate-100;
   }
 
   ::selection {
     @apply bg-brand-100 text-brand-900;
   }
 
+  html.dark ::selection {
+    @apply bg-brand-800 text-brand-100;
+  }
+
   /* Anneau de focus unique et visible sur tout le produit */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+
+  html.dark :focus-visible {
+    @apply outline-brand-300;
   }
 }
 
 @layer components {
   /* Carte de surface standard */
   .card {
-    @apply rounded-card border border-slate-200 bg-white shadow-card;
+    @apply rounded-card border border-slate-200 bg-white shadow-card
+      dark:border-slate-800 dark:bg-slate-900;
   }
 
   /* Boutons — la base est répétée dans chaque variante : Tailwind 4 n'autorise
@@ -132,26 +154,31 @@
   }
 
   .btn-secondary {
-    @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-100;
+    @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-100
+      dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200
+      dark:hover:bg-slate-800;
   }
 
   /* Typographie d'écran */
   .kicker {
-    @apply text-xs font-semibold uppercase tracking-[0.18em] text-brand-600;
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-brand-600
+      dark:text-brand-400;
   }
 
   .screen-title {
-    @apply text-2xl font-semibold tracking-tight text-slate-900;
+    @apply text-2xl font-semibold tracking-tight text-slate-900
+      dark:text-slate-50;
   }
 
   .tagline {
-    @apply mt-2 text-sm leading-relaxed text-slate-600;
+    @apply mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300;
   }
 
   /* Note discrète (états vides, mentions) */
   .note {
     @apply flex items-start gap-2 rounded-lg border border-slate-200 bg-white
-      p-4 text-sm text-slate-500;
+      p-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900
+      dark:text-slate-400;
   }
 }
 
