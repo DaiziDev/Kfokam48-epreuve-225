@@ -6,6 +6,8 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 ## [Non publié]
 
 ### Ajouté
+- **EF2/EF3 (Must)** — `POST /api/presences` : l'étudiant marque sa présence avec le code. 201 avec `source = ETUDIANT` ; `410 CODE_EXPIRE` (fenêtre RG1 passée) ; `409 DEJA_PRESENT` ; `400 CODE_INCONNU` ; plus `404 ETUDIANT_INCONNU` et `409 SESSION_CLOTUREE` (décisions section 7). Code normalisé (trim + casse) pour la saisie manuelle.
+- Migration `V3__etudiants_et_presences.sql` : tables `etudiant` et `presence`, contrainte d'unicité (session, étudiant).
 - Architecture frontend : SPA Angular sans SSR, couche API isolée (`core/api/` : token `API_URL`, intercepteur d'erreurs normalisant en `{ code, message }`, service par ressource du contrat), types TS miroir du contrat, 3 écrans lazy (`etudiant/`, `relecteur/`, `formateur/`), proxy de dev vers le backend. Documentée dans `docs/ARCHITECTURE.md`.
 - `docs/ARCHITECTURE.md` : décisions backend/frontend documentées, alternatives rejetées.
 - Swagger UI (springdoc 3.1.1) : `/swagger-ui.html`, métadonnées issues du contrat.
