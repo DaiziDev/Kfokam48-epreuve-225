@@ -5,6 +5,11 @@ versionnement [Sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Modifié — analyse du ticket #23 (double relecture)
+- Cahier des charges révisé : RG5 (deux relecteurs distincts, auteur exclu), RG6, RG10, RG12, nouvelle RG16 (note retenue = moyenne des deux rendus, provisoire après un seul) ; EF7, EF8, EF9, EF12, EF16 réécrites ; comportement explicite avec moins de deux relecteurs éligibles (`422 AUCUN_RELECTEUR_DISPONIBLE`). Diagrammes D1, D2, D4 mis à jour.
+- Contrat API révisé : `noteProvisoire` et `commentaires` (anonymes) sur `GET /api/exercices/{id}`, `moyenneProvisoire` sur `GET /api/tableau`.
+- Périmètre : EF4 (blocage après 5 codes erronés, Should, non développée) est reportée à v1.1 pour absorber ce Must tardif ; EF14 (auto-clôture), déjà livrée en v0.1, reste en place.
+
 ### Ajouté
 - **Design system frontend** (benchmark documenté dans `docs/DESIGN.md`) : tokens Tailwind 4 (`@theme`) — indigo de marque, statuts sémantiques emerald/amber/red, typo Inter + mono ; composants `ui-icon` (SVG Lucide inlinés, zéro emoji, zéro dépendance), `ui-badge-statut`, `ui-code-input` (6 cases, collage, navigation clavier, CVA) ; i18n FR/EN par signals avec bascule instantanée.
 - **Socle frontend** : couche API complète (services et types pour toutes les opérations du contrat, testés verbe + chemin + corps) ; sélecteur d'identité « Je suis » (fin des `etudiantId: 1` / `promotionId: 1` en dur) ; 26 codes d'erreur du contrat traduits FR/EN via le pipe `erreurApi`.

@@ -114,13 +114,13 @@ Chaque entrée répond aux trois mêmes questions :
 
 ## Étape 3 — Enveloppe
 
-**Fait :**
+**Fait :** ticket #23 ouvert avant le développement. Analyse mise à jour et commit de conséquence `b791fc5`. Découpage proposé en trois sous-issues : migration et conservation des données ; assignation/rendu des deux pairs ; contrat API et interfaces. Le propriétaire du dépôt ouvre ces sous-issues GitHub. Sacrifice initialement inscrit sur EF14 (auto-clôture), puis corrigé : EF14 était déjà livrée et testée en v0.1, la reporter ne libérait rien et laissait un code actif contredisant le cahier des charges. Le sacrifice porte sur EF4 (voir ci-dessous).
 
-**Bloqué :**
+**Bloqué :** un autre éditeur a réécrit certains fichiers backend en parallèle, réintroduisant la règle « RELU au premier rendu ». Le travail de stabilisation continue après coordination.
 
-**IA :**
+**IA :** l'analyse repérée par ticket #23 a conduit à retenir le rang de chaque relecture pour migrer l'historique sans écraser les notes existantes. Vérification en cours par migrations Flyway et tests d'intégration du cas un puis deux rendus.
 
-**Ce que j'ai sorti du périmètre pour absorber le changement, et pourquoi :**
+**Ce que j'ai sorti du périmètre pour absorber le changement, et pourquoi :** EF4 (blocage 2 min après 5 codes erronés, Should), reportée à v1.1. C'est le seul travail restant qui n'était pas encore développé : le temps prévu pour lui passe à la double relecture, un Must qui touche la note de chaque étudiant. EF4 est une protection anti-abus secondaire ; son absence n'empêche aucun parcours.
 
 ---
 
