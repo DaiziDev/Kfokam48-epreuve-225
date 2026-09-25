@@ -6,6 +6,52 @@ export type Locale = 'fr' | 'en';
 const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
   fr: {
     'app.titre': 'KFOKAM48 — Présence & Relecture',
+
+    'accueil.badge': 'Outil officiel de la formation KFOKAM48',
+    'accueil.titre-1': 'La présence en',
+    'accueil.mot-code': 'un code.',
+    'accueil.titre-2': 'La relecture entre pairs.',
+    'accueil.sous-titre':
+      'Le formateur ouvre une session, projette un code à 6 caractères, les étudiants pointent depuis leur téléphone. Les exercices déposés sont relus par les pairs, au hasard parmi les présents.',
+    'accueil.cta-primaire': 'Marquer ma présence',
+    'accueil.cta-secondaire': 'Espace formateur',
+
+    'accueil.stats-titre': 'Des règles simples, appliquées à la lettre',
+    'accueil.stat-1': 'minutes de validité du code',
+    'accueil.stat-2': 'relecteur par exercice, au hasard parmi les présents',
+    'accueil.stat-3': 'relectures en attente rendues visibles',
+    'accueil.stat-4': "d'attente après 5 codes erronés",
+
+    'accueil.comment-titre': 'Trois étapes, aucune feuille de présence',
+    'accueil.etape-1-titre': 'Le formateur ouvre la session',
+    'accueil.etape-1-texte': 'Un code à 6 caractères est généré, valable 15 minutes, projeté en salle.',
+    'accueil.etape-2-titre': 'Les étudiants pointent',
+    'accueil.etape-2-texte': 'Chacun saisit le code depuis son téléphone. Les doubles présences sont refusées automatiquement.',
+    'accueil.etape-3-titre': 'Les pairs relisent',
+    'accueil.etape-3-texte': 'Chaque exercice déposé reçoit un relecteur au hasard parmi les présents. Note de 0 à 20, définitive.',
+
+    'accueil.garanties-titre': 'Conçu pour être juste, même quand personne ne regarde',
+    'accueil.garantie-1-titre': 'Relecteur toujours distinct de l\'auteur',
+    'accueil.garantie-1-texte': 'Le système ne peut jamais assigner un exercice à son propre auteur.',
+    'accueil.garantie-2-titre': 'Anonymat du relecteur',
+    'accueil.garantie-2-texte': 'L étudiant relu voit sa note et son commentaire, jamais le nom du relecteur.',
+    'accueil.garantie-3-titre': 'Note verrouillée dès l\'envoi',
+    'accueil.garantie-3-texte': 'Une relecture rendue est définitive : aucune correction possible ensuite.',
+    'accueil.garantie-4-titre': 'Double présence impossible',
+    'accueil.garantie-4-texte': 'La base de données elle-même refuse deux présences du même étudiant à une session.',
+    'accueil.garantie-5-titre': 'Clôture automatique après 24 h',
+    'accueil.garantie-5-texte': 'Une session oubliée se clôt seule un jour après l\'expiration du code.',
+    'accueil.garantie-6-titre': 'Rattrapage par le formateur',
+    'accueil.garantie-6-texte': 'Un étudiant sans réseau au moment du code ? Le formateur ajoute sa présence à la main.',
+
+    'accueil.cta-final-texte': 'Formateur ou étudiant, votre session vous attend.',
+    'accueil.cta-final-primaire': 'Pointer maintenant',
+    'accueil.cta-final-secondaire': 'Voir le tableau de suivi',
+
+    'accueil.pied': 'Présence par code éphémère · Relecture entre pairs · Notes verrouillées',
+
+    'accueil.mockup-etiquette': 'Code de présence',
+    'accueil.mockup-succes': 'Présence enregistrée',
     'nav.etudiant': 'Étudiant',
     'nav.relecteur': 'Relecteur',
     'nav.formateur': 'Formateur',
@@ -49,6 +95,52 @@ const DICTIONNAIRES: Record<Locale, Record<string, string>> = {
   },
   en: {
     'app.titre': 'KFOKAM48 — Attendance & Peer Review',
+
+    'accueil.badge': 'The official tool of the KFOKAM48 program',
+    'accueil.titre-1': 'Attendance in',
+    'accueil.mot-code': 'one code.',
+    'accueil.titre-2': 'Peer review among classmates.',
+    'accueil.sous-titre':
+      'The instructor opens a session and projects a 6-character code; students check in from their phones. Submitted exercises are reviewed by peers, drawn at random among those present.',
+    'accueil.cta-primaire': 'Check in now',
+    'accueil.cta-secondaire': 'Instructor area',
+
+    'accueil.stats-titre': 'Simple rules, enforced to the letter',
+    'accueil.stat-1': 'minutes of code validity',
+    'accueil.stat-2': 'reviewer per exercise, drawn at random among attendees',
+    'accueil.stat-3': 'pending reviews kept visible',
+    'accueil.stat-4': 'lockout after 5 wrong codes',
+
+    'accueil.comment-titre': 'Three steps, no attendance sheet',
+    'accueil.etape-1-titre': 'The instructor opens the session',
+    'accueil.etape-1-texte': 'A 6-character code is generated, valid for 15 minutes, projected in the room.',
+    'accueil.etape-2-titre': 'Students check in',
+    'accueil.etape-2-texte': 'Each student types the code from their phone. Duplicate check-ins are rejected automatically.',
+    'accueil.etape-3-titre': 'Peers review',
+    'accueil.etape-3-texte': 'Every submitted exercise gets a reviewer drawn at random among attendees. Grade 0-20, final.',
+
+    'accueil.garanties-titre': 'Designed to be fair, even when nobody is watching',
+    'accueil.garantie-1-titre': 'Reviewer never the author',
+    'accueil.garantie-1-texte': 'The system can never assign an exercise to its own author.',
+    'accueil.garantie-2-titre': 'Reviewer anonymity',
+    'accueil.garantie-2-texte': "The reviewed student sees their grade and comment, never the reviewer's name.",
+    'accueil.garantie-3-titre': 'Grade locked on submission',
+    'accueil.garantie-3-texte': 'A submitted review is final: no corrections afterwards.',
+    'accueil.garantie-4-titre': 'Duplicate check-in impossible',
+    'accueil.garantie-4-texte': 'The database itself refuses two check-ins from the same student in one session.',
+    'accueil.garantie-5-titre': 'Auto-close after 24 h',
+    'accueil.garantie-5-texte': 'A forgotten session closes itself one day after the code expires.',
+    'accueil.garantie-6-titre': 'Instructor catch-up',
+    'accueil.garantie-6-texte': 'No signal when the code was shown? The instructor adds the attendance by hand.',
+
+    'accueil.cta-final-texte': 'Instructor or student, your session is waiting.',
+    'accueil.cta-final-primaire': 'Check in now',
+    'accueil.cta-final-secondaire': 'See the tracking dashboard',
+
+    'accueil.pied': 'Ephemeral code check-in · Peer review · Locked grades',
+
+    'accueil.mockup-etiquette': 'Attendance code',
+    'accueil.mockup-succes': 'Attendance recorded',
     'nav.etudiant': 'Student',
     'nav.relecteur': 'Reviewer',
     'nav.formateur': 'Instructor',

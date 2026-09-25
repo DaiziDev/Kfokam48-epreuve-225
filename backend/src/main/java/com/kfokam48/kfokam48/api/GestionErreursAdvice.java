@@ -7,8 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.kfokam48.kfokam48.exercice.AucunRelecteurDisponibleException;
 import com.kfokam48.kfokam48.exercice.ExerciceDejaDeposeException;
@@ -16,6 +18,12 @@ import com.kfokam48.kfokam48.exercice.ExerciceInconnuException;
 import com.kfokam48.kfokam48.exercice.LienInvalideException;
 import com.kfokam48.kfokam48.exercice.NonAuteurException;
 import com.kfokam48.kfokam48.exercice.RelectureDejaCommenceeException;
+import com.kfokam48.kfokam48.relecture.AutoRelectureException;
+import com.kfokam48.kfokam48.relecture.CommentaireInvalideException;
+import com.kfokam48.kfokam48.relecture.NoteInvalideException;
+import com.kfokam48.kfokam48.relecture.RelecteurNonAssigneException;
+import com.kfokam48.kfokam48.relecture.RelectureDejaRendueException;
+import com.kfokam48.kfokam48.relecture.RelectureInconnueException;
 import com.kfokam48.kfokam48.session.CodeExpireException;
 import com.kfokam48.kfokam48.session.CodeInconnuException;
 import com.kfokam48.kfokam48.session.DejaPresentException;
@@ -53,6 +61,62 @@ public class GestionErreursAdvice {
     public ResponseEntity<CorpsErreur> corpsIllisible(HttpMessageNotReadableException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new CorpsErreur("CORPS_INVALIDE", "Le corps de la requête est illisible ou le JSON est invalide."));
+    }
+
+    /** Paramètre de requête obligatoire absent (ex. relecteurId) → 400, jamais 500. */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<CorpsErreur> parametreManquant(MissingServletRequestParameterException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CorpsErreur("CHAMPS_REQUIS", "Le paramètre " + exception.getParameterName() + " est obligatoire."));
+    }
+
+    /** Identifiant non numérique dans le chemin ou la requête (ex. /api/relectures/abc) → 400, jamais 500. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<CorpsErreur> parametreInvalide(MethodArgumentTypeMismatchException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CorpsErreur("PARAMETRE_INVALIDE", "Le paramètre " + exception.getName() + " est invalide."));
+    }
+
+    /** Note absente de 0–20 ou non entière → 400 NOTE_INVALIDE (EF9, RG8). */
+    @ExceptionHandler(NoteInvalideException.class)
+    public ResponseEntity<CorpsErreur> noteInvalide(NoteInvalideException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CorpsErreur("NOTE_INVALIDE", exception.getMessage()));
+    }
+
+    /** Commentaire trop long pour être stocké → 400 COMMENTAIRE_INVALIDE (section 7). */
+    @ExceptionHandler(CommentaireInvalideException.class)
+    public ResponseEntity<CorpsErreur> commentaireInvalide(CommentaireInvalideException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CorpsErreur("COMMENTAIRE_INVALIDE", exception.getMessage()));
+    }
+
+    /** Relecture de son propre exercice → 403 AUTO_RELECTURE (EF10, RG4). */
+    @ExceptionHandler(AutoRelectureException.class)
+    public ResponseEntity<CorpsErreur> autoRelecture(AutoRelectureException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new CorpsErreur("AUTO_RELECTURE", exception.getMessage()));
+    }
+
+    /** Rendu par un autre que le relecteur assigné → 403 RELECTEUR_NON_ASSIGNE (section 7). */
+    @ExceptionHandler(RelecteurNonAssigneException.class)
+    public ResponseEntity<CorpsErreur> relecteurNonAssigne(RelecteurNonAssigneException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new CorpsErreur("RELECTEUR_NON_ASSIGNE", exception.getMessage()));
+    }
+
+    /** Identifiant de relecture inexistant → 404 RELECTURE_INCONNUE (EF9). */
+    @ExceptionHandler(RelectureInconnueException.class)
+    public ResponseEntity<CorpsErreur> relectureInconnue(RelectureInconnueException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new CorpsErreur("RELECTURE_INCONNUE", exception.getMessage()));
+    }
+
+    /** Deuxième rendu de la même relecture → 409 RELECTURE_DEJA_RENDUE (EF11, RG9). */
+    @ExceptionHandler(RelectureDejaRendueException.class)
+    public ResponseEntity<CorpsErreur> relectureDejaRendue(RelectureDejaRendueException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CorpsErreur("RELECTURE_DEJA_RENDUE", exception.getMessage()));
     }
 
     /** promotionId inexistant → 404 PROMOTION_INCONNUE (décision section 7). */

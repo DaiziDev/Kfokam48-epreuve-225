@@ -308,9 +308,21 @@ paths:
                 note: { type: integer, minimum: 0, maximum: 20 }
                 commentaire: { type: string }
       responses:
-        "200": { description: Relecture enregistrée }
-        "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE
-        "403": { $ref: "#/components/responses/Erreur" }   # AUTO_RELECTURE
+        "200":
+          description: Relecture enregistrée — définitive (RG9) ; corps ajouté à l'implémentation EF9
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, exerciceId, note, commentaire, rendueAt]
+                properties:
+                  id: { type: integer, format: int64 }
+                  exerciceId: { type: integer, format: int64 }
+                  note: { type: integer, minimum: 0, maximum: 20 }
+                  commentaire: { type: string }
+                  rendueAt: { type: string, format: date-time }
+        "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE (hors 0–20 ou non entière ; 12.0 accepté) | CHAMPS_REQUIS | COMMENTAIRE_INVALIDE (> 4000 car.) | PARAMETRE_INVALIDE
+        "403": { $ref: "#/components/responses/Erreur" }   # AUTO_RELECTURE | RELECTEUR_NON_ASSIGNE (ni auteur ni relecteur assigné, section 7)
         "404": { $ref: "#/components/responses/Erreur" }   # RELECTURE_INCONNUE
         "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_RENDUE
 
@@ -340,6 +352,8 @@ paths:
                     exerciceId: { type: integer, format: int64 }
                     exerciceLien: { type: string, format: uri }
                     rendue: { type: boolean }
+        "400": { $ref: "#/components/responses/Erreur" }   # CHAMPS_REQUIS (relecteurId absent) | PARAMETRE_INVALIDE
+        "404": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU (ajout EF9 ; liste vide si l'étudiant existe sans relecture)
 
   /api/tableau:
     get:
