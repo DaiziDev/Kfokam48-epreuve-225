@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { LUCIDE_ICONS, LucideIconName } from './lucide';
 
@@ -43,5 +50,15 @@ export class UiIcon {
   /** Nom de l'icône dans le registre Lucide (voir lucide.ts). */
   readonly name = input.required<LucideIconName>();
 
-  readonly chemin = computed(() => LUCIDE_ICONS[this.name()] ?? '');
+  private readonly sanitizer = inject(DomSanitizer);
+
+  /**
+   * bypassSecurityTrustHtml justifié : le HTML vient EXCLUSIVEMENT de notre
+   * registre statique LUCIDE_ICONS (jamais d'une entrée utilisateur), et le
+   * sanitizer par défaut strippait les éléments SVG (path, circle…) — les
+   * icônes sortaient incomplètes (warnings de sanitization constatés aux tests).
+   */
+  readonly chemin = computed<SafeHtml>(
+    () => this.sanitizer.bypassSecurityTrustHtml(LUCIDE_ICONS[this.name()] ?? ''),
+  );
 }

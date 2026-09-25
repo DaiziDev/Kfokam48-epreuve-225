@@ -1,18 +1,26 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TPipe } from '../../ui/i18n/t.pipe';
+import { UiIcon } from '../../ui/icon/ui-icon';
 
+/**
+ * Écran relecteur — la liste des relectures assignées (EF9, GET /api/relectures)
+ * et le formulaire de rendu (EF9, note 0-20 + commentaire) s'y brancheront.
+ */
 @Component({
   selector: 'app-relecteur',
-  imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TPipe, UiIcon],
   template: `
-    <main class="mx-auto max-w-md px-4 py-8">
-      <h1 class="text-2xl font-semibold text-slate-900">Mes relectures</h1>
-      <p class="mt-2 text-slate-600">
-        Les relectures qui m'ont été assignées, à rendre une par une.
+    <section class="card p-6">
+      <p class="kicker">{{ 'relecteur.kicker' | t }}</p>
+      <h1 class="screen-title">{{ 'relecteur.titre' | t }}</h1>
+      <p class="tagline">{{ 'relecteur.tagline' | t }}</p>
+
+      <p class="note mt-6">
+        <ui-icon name="alert" class="mt-0.5 text-base" />
+        {{ 'relecteur.en-attente' | t }}
       </p>
-      <p class="mt-6 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
-        Écran en attente des tickets EF9–EF12 (rendu de relecture, consultation de la note).
-      </p>
-    </main>
+    </section>
   `,
 })
 export class Relecteur {}

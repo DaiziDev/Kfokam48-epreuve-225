@@ -1,18 +1,46 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TPipe } from '../../ui/i18n/t.pipe';
+import { UiIcon } from '../../ui/icon/ui-icon';
+import { CodeInput } from '../../ui/code-input/code-input';
 
+/**
+ * Écran étudiant — la saisie du code de présence (EF2/EF3) viendra s'y brancher
+ * dès le premier dialogue frontend ↔ backend.
+ */
 @Component({
   selector: 'app-etudiant',
-  imports: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, TPipe, UiIcon, CodeInput],
   template: `
-    <main class="mx-auto max-w-md px-4 py-8">
-      <h1 class="text-2xl font-semibold text-slate-900">Espace étudiant</h1>
-      <p class="mt-2 text-slate-600">
-        Saisir le code de présence, déposer son exercice, faire sa relecture.
+    <section class="card p-6">
+      <p class="kicker">{{ 'etudiant.kicker' | t }}</p>
+      <h1 class="screen-title">{{ 'etudiant.titre' | t }}</h1>
+      <p class="tagline">{{ 'etudiant.tagline' | t }}</p>
+
+      <div class="mt-6">
+        <label for="code-presence" class="mb-2 block text-sm font-medium text-slate-700">
+          {{ 'etudiant.etiquette-code' | t }}
+        </label>
+        <ui-code-input
+          [ngModel]="code"
+          (ngModelChange)="code = $event"
+          name="code"
+          [etiquette]="'etudiant.etiquette-code' | t"
+        />
+      </div>
+
+      <button type="button" class="btn-primary mt-6 w-full" [disabled]="!code">
+        <ui-icon name="check-circle-2" class="text-base" />
+        {{ 'etudiant.action' | t }}
+      </button>
+      <p class="note mt-4">
+        <ui-icon name="alert" class="mt-0.5 text-base" />
+        {{ 'etudiant.en-attente' | t }}
       </p>
-      <p class="mt-6 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
-        Écran en attente des tickets EF2+ (saisie du code, dépôt, relecture).
-      </p>
-    </main>
+    </section>
   `,
 })
-export class Etudiant {}
+export class Etudiant {
+  code = '';
+}

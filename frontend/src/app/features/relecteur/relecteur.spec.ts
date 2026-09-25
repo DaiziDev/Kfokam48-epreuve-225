@@ -18,6 +18,6 @@ describe('Relecteur', () => {
     const fixture = TestBed.createComponent(Relecteur);
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('h1')?.textContent).toContain('Mes relectures');
+    expect(element.querySelector('h1')?.textContent).toContain('Vos relectures assignées');
   });
 });

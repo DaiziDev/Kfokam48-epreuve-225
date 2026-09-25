@@ -67,19 +67,22 @@
     @apply rounded-card border border-slate-200 bg-white shadow-card;
   }
 
-  /* Boutons */
-  .btn {
+  /* Boutons — la base est répétée dans chaque variante : Tailwind 4 n'autorise
+     pas @apply d'une classe du même @layer components */
+  .btn,
+  .btn-primary,
+  .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5
       text-sm font-semibold transition-colors disabled:cursor-not-allowed
       disabled:opacity-50;
   }
 
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
+    @apply bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
   }
 
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-100;
+    @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-100;
   }
 
   /* Typographie d'écran */

@@ -14,10 +14,10 @@ describe('Etudiant', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('affiche le titre de l espace étudiant', () => {
+  it('affiche le titre de l écran étudiant', () => {
     const fixture = TestBed.createComponent(Etudiant);
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('h1')?.textContent).toContain('Espace étudiant');
+    expect(element.querySelector('h1')?.textContent).toContain('Marquez votre présence');
   });
 });

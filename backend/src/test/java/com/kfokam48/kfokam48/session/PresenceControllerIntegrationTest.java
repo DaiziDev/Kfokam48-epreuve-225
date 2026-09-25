@@ -218,7 +218,7 @@ class PresenceControllerIntegrationTest {
         String code = creerSessionEtRetournerCode();
 
         // Le formateur clôture la session pendant que le code est encore valide
-        // (la clôture manuelle EF13 viendra avec son ticket ; on simule l'état)
+        // (état posé directement : ce test vise la présence, EF13 est testé dans SessionControllerIntegrationTest)
         SessionEntity session = sessionParCode(code);
         session.setStatut(SessionStatut.CLOTUREE);
 

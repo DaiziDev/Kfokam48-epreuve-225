@@ -46,6 +46,14 @@ Chaque entrée répond aux trois mêmes questions :
 
 **IA :**
 
+### EF13/EF15 — clôture et réouverture manuelles
+
+**Fait :** `PATCH /api/sessions/{id}/cloture` (OUVERTE → CLOTUREE, sinon `409 SESSION_DEJA_CLOTUREE`) et `PATCH /api/sessions/{id}/reouverture` (CLOTUREE → OUVERTE, sinon `409 SESSION_DEJA_OUVERTE`), `404 SESSION_INCONNUE` sur les deux. La réouverture ne touche pas `expirationAt` (RG15), vérifié par un test sur une session vieillie de 3h pour qu'un recalcul depuis l'horloge soit détecté. Test de bout en bout : présence manuelle refusée pendant la clôture, acceptée après réouverture. 8 tests nouveaux, 34/34 verts.
+
+**Bloqué :**
+
+**IA :**
+
 ---
 
 ## Étape 3 — Enveloppe

@@ -129,7 +129,11 @@ export class CodeInput implements ControlValueAccessor {
   // --- Internes -------------------------------------------------------------
 
   private poser(index: number, caractere: string) {
-    this.valeurs.update((anciennes) => anciennes.with(index, caractere));
+    this.valeurs.update((anciennes) => {
+      const nouvelles = [...anciennes];
+      nouvelles[index] = caractere;
+      return nouvelles;
+    });
     this.notifier();
   }
 
