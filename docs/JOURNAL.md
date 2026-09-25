@@ -24,11 +24,11 @@ Chaque entrée répond aux trois mêmes questions :
 
 ## Étape 2 — Première version
 
-**Fait :**
+**Fait :** EF1 (Must) livrée : `POST /api/sessions` renvoie 201 avec id, code (6 caractères sans O/0/I/1), ouvertureAt et expirationAt = ouverture + 15 min (RG1) ; 400 `CHAMPS_REQUIS` au format imposé si champ manquant ; 404 `PROMOTION_INCONNUE` si le promotionId n'existe pas (tranché en section 7). Migration Flyway `V1__sessions_et_promotions.sql` (promotion + session_cours, BIGINT IDENTITY, code unique indexé). 5 tests d'intégration MockMvc sur H2 + Flyway réel, horloge figée à 10:00Z pour vérifier l'arithmétique RG1 exacte. 6/6 tests verts.
 
-**Bloqué :**
+**Bloqué :** ~30 min sur Spring Boot 4 : Jackson 3 remplace 2 (`tools.jackson.*`), `@AutoConfigureMockMvc` a déménagé vers `org.springframework.boot.webmvc.test.autoconfigure`, et `spring.jackson.serialization.write-dates-as-timestamps` n'existe plus (le binding `JacksonProperties` casse le contexte au démarrage). Puis un conflit de nom de bean `horloge` entre la config de prod et la config de test — résolu en renommant le bean de test avec `@Primary`.
 
-**IA :**
+**IA :** a proposé le découpage en 8 étapes, le format du code (alphabet sans ambiguïté visuelle), le bean `Clock` injectable et le test par horloge figée. Vérifié en relançant la suite Maven après chaque étape et en lisant les causes profondes dans les rapports surefire plutôt qu'en faisant confiance à ses explications.
 
 ---
 

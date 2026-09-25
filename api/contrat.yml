@@ -46,7 +46,8 @@ paths:
                   ouvertureAt: { type: string, format: date-time }
                   expirationAt: { type: string, format: date-time }
                   statut: { type: string, enum: [OUVERTE, CLOTUREE], default: OUVERTE }
-        "400": { $ref: "#/components/responses/Erreur" }
+        "400": { $ref: "#/components/responses/Erreur" }   # CHAMPS_REQUIS
+        "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE (ajout EF1, décision section 7)
 
   /api/sessions/{id}/cloture:
     patch:
