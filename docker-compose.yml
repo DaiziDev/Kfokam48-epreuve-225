@@ -1,0 +1,57 @@
+# KFOKAM48 — Présence & Relecture : l'application complète en une commande.
+#
+#   docker compose up --build        puis   http://localhost:8090
+#
+# Trois conteneurs : PostgreSQL, l'API Spring Boot, nginx (SPA + relais /api).
+# Seul nginx est exposé ; base et API restent sur le réseau interne.
+# Valeurs surchargeables par variables d'environnement ou fichier .env.
+
+name: kfokam48
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kfokam48}
+      POSTGRES_USER: ${POSTGRES_USER:-kfokam48}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kfokam48}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      # Spring lit ces variables à la place de application.properties
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-kfokam48}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-kfokam48}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-kfokam48}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Prêt quand le port HTTP répond (Flyway a fini ses migrations) ;
+    # bash /dev/tcp car l'image JRE n'embarque ni curl ni wget
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8081"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "${WEB_PORT:-8090}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-data:

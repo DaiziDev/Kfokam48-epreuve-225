@@ -9,15 +9,36 @@ Application de gestion pour la formation KFOKAM48 : prise de présence par code 
 | `docs/`   | Cahier des charges et diagrammes (D1–D4)                      |
 | `api/`    | Contrat d'API OpenAPI (`contrat.yml`)                         |
 | `backend/`| API Spring Boot (Java 21, Maven, JPA, Flyway, PostgreSQL/H2)  |
-| `frontend/`| Application Angular (SSR, Tailwind CSS)                      |
+| `frontend/`| Application Angular (SPA, Tailwind CSS)                      |
 
-## Prérequis
+## Démarrage rapide avec Docker
+
+Seul prérequis : Docker (Docker Desktop sous Windows et macOS).
+
+```bash
+docker compose up --build
+```
+
+Puis ouvrir **http://localhost:8090**. Trois conteneurs démarrent dans l'ordre :
+
+| Service    | Rôle                                                               | Exposé              |
+| ---------- | ------------------------------------------------------------------ | ------------------- |
+| `db`       | PostgreSQL 17, données dans le volume `db-data`                    | non                 |
+| `backend`  | API Spring Boot ; migrations Flyway au démarrage (schéma + démo)   | non                 |
+| `frontend` | nginx : sert l'application et relaie `/api` vers le backend        | `8090` → `80`       |
+
+- Swagger UI : http://localhost:8090/swagger-ui.html
+- Changer de port : `WEB_PORT=9000 docker compose up --build`
+- Identifiants de base : `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` (défaut `kfokam48`), surchargeables par variables d'environnement ou fichier `.env`
+- Arrêter : `docker compose down` — repartir d'une base vide : `docker compose down -v`
+
+## Installation manuelle (développement)
+
+### Prérequis
 
 - Java 21+
 - Docker (pour PostgreSQL) — ou une instance PostgreSQL existante
-- Node.js 20+ et npm (frontend)
-
-## Installation depuis un clone vierge
+- Node.js 20.19+ et npm (frontend)
 
 ### 1. Base de données
 
@@ -38,7 +59,7 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
-L'API démarre sur http://localhost:8080. La console H2 n'est active qu'en profil de test.
+L'API démarre sur http://localhost:8081. La console H2 n'est active qu'en profil de test.
 
 ### 3. Frontend
 
@@ -48,13 +69,16 @@ npm install
 npm start
 ```
 
-L'application démarre sur http://localhost:4200.
+L'application démarre sur http://localhost:4200 (le proxy de développement relaie `/api` vers le port 8081).
 
 ## Vérifier l'installation
 
 ```bash
-curl http://localhost:8080/api/tableau?promotionId=1
-# → 200 avec un tableau vide, ou 404 { "code": "PROMOTION_INCONNUE", ... } si la promotion n'existe pas
+# Docker
+curl "http://localhost:8090/api/etudiants?promotionId=1"
+# Installation manuelle
+curl "http://localhost:8081/api/etudiants?promotionId=1"
+# → 200 avec les trois étudiants de démonstration de la promotion KFOKAM48
 ```
 
 ## Tests
@@ -67,7 +91,8 @@ cd frontend && npm test
 ## Documentation
 
 - `docs/CAHIER_DES_CHARGES.md` — exigences (EF/RG), règles tranchées, contraintes techniques
-- `api/contrat.yml` — les 11 opérations de l'API et le format d'erreur imposé
+- `api/contrat.yml` — les opérations de l'API et le format d'erreur imposé
 - `docs/diagrammes/` — D1 cas d'utilisation (PlantUML), D2 modèle de données, D3 séquence, D4 états-transitions (Mermaid)
-- `JOURNAL.md` — journal de bord tenu à chaque étape
+- `docs/JOURNAL.md` — journal de bord tenu à chaque étape
+- `docs/ARCHITECTURE.md` — décisions d'architecture backend et frontend
 - `CHANGELOG.md` — historique des versions
